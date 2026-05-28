@@ -1,0 +1,10 @@
+# Python / Backend
+backend/venv/
+__pycache__/
+*.pyc
+
+# Node / Frontend
+frontend/node_modules/
+
+# Environment Variables (Keep API keys safe!)
+.env
