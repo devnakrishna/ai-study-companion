@@ -6,5 +6,25 @@ __pycache__/
 # Node / Frontend
 frontend/node_modules/
 
-# Environment Variables (Keep API keys safe!)
+
+
+# Python
+__pycache__/
+*.pyc
+venv/
 .env
+
+# Node
+
+dist/
+build/
+
+# Logs
+*.log
+
+# JSON runtime files (IMPORTANT for your project)
+latest_quiz.json
+submissions.json
+
+# OS
+.DS_Store

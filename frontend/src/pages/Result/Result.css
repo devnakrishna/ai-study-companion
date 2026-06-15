@@ -1,0 +1,65 @@
+.result-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: Arial;
+}
+
+.result-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.score-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  margin-bottom: 20px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.review-card {
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+}
+
+.q {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.correct {
+  color: green;
+  font-weight: 600;
+}
+
+.wrong {
+  color: red;
+  font-weight: 600;
+}
+
+.feedback-card {
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+}
+
+.feedback-card p {
+  margin: 5px 0;
+}
+
+.home-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #111;
+  color: white;
+  cursor: pointer;
+}
