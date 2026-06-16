@@ -1,7 +1,7 @@
 import json
 from app.services.evaluators.mcq_evaluator import evaluate_mcq
 from app.services.evaluators.descriptive_evaluator import evaluate_descriptive
-from app.prompts.evaluation_prompt import evaluation_prompt
+
 
 def evaluate_answers():
 
@@ -32,10 +32,10 @@ def evaluate_answers():
         if q["type"] == "Long Answer":
             total_desc += 1
 
-            result = evaluate_descriptive(q["question"], ans["answer"])
+            result = evaluate_descriptive(q["question"],q["correct_answer"], ans["answer"])
 
             desc_score += result["score"] / 5
-           
+
             feedback.append({
                 "question": q["question"],
                 "score": result["score"],
@@ -77,9 +77,12 @@ def evaluate_answers():
         })
     strong_areas = list(set(strong_areas))
     weak_areas = list(set(weak_areas))
-    total_questions = total_mcq + total_desc
+
+    total_questions = total_mcq + total_desc 
     total_score = mcq_score + desc_score
+
     percentage = (total_score / total_questions) * 100 if total_questions > 0 else 0
+
     scorecard = {
     "total_score": round(total_score, 2),
     "total_questions": total_questions,
@@ -102,5 +105,6 @@ def evaluate_answers():
     "review": review_data,
     "strong_areas": strong_areas,
     "weak_areas": weak_areas,
+    
     
 }

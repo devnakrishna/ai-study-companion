@@ -1,25 +1,32 @@
-import json
-import google.generativeai as genai
-from app.prompts.evaluation_prompt import get_descriptive_prompt
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+from app.ai.langchain_config import llm
+from app.prompts.evaluation_prompt import EVALUATION_TEMPLATE
+# Prompt Template
+evaluation_prompt = PromptTemplate(
+    input_variables=["question", "correct_answer", "user_answer"],
+    template=EVALUATION_TEMPLATE
+)
 
-model = genai.GenerativeModel("gemini-3.1-flash-lite")
+# Output Parser
+parser = JsonOutputParser()
+
+# Chain
+evaluation_chain = evaluation_prompt | llm | parser
 
 
-def evaluate_descriptive(question, user_answer):
-
-    prompt = get_descriptive_prompt(question, user_answer)
-
-    response = model.generate_content(prompt)
-
+def evaluate_descriptive(question, correct_answer, user_answer):
     try:
-        cleaned = response.text.strip().replace("```json", "").replace("```", "")
-        return json.loads(cleaned)
+        result = evaluation_chain.invoke({
+            "question": question,
+            "correct_answer": correct_answer,
+            "user_answer": user_answer
+        })
+        return result
 
-    except:
-        return {
-            "score": 0,
-            "feedback": "Could not evaluate answer",
-            "strengths": "",
-            "mistakes": "",
-            "improvement": ""
-        }
+    except Exception as e:
+        print("EVALUATION ERROR:", e)
+    return {
+        "score": 0,
+        "feedback": "Evaluation failed"
+    }

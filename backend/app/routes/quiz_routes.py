@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.post("/generate")
 def generate(request: QuizRequest):
-    return generate_quiz(request)
+    return generate_quiz(request.topic,request.level)
 
 @router.post("/submit")
 def  submit_quiz(submission: list=Body(...)):
