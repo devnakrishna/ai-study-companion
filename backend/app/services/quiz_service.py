@@ -4,6 +4,9 @@ from langchain_core.output_parsers import StrOutputParser
 from app.ai.langchain_config import llm
 from app.utils.validators.validator import validate_questions
 from app.prompts.quiz_prompt import QUIZ_TEMPLATE
+from app.core.paths import QUIZ_FILE
+
+from pathlib import Path
 
 quiz_prompt = PromptTemplate(
     input_variables=["topic", "level"],
@@ -19,19 +22,22 @@ def generate_quiz(topic, level):
         "topic": topic,
         "level": level
     })
-
+    
     try:
-        cleaned = response.strip().replace("```json", "").replace("```", "")
+        cleaned = (
+            response.strip()
+            .replace("```json", "")
+            .replace("```", "")
+        )
         questions = json.loads(cleaned)
 
-        validate_questions(questions)
+        if not validate_questions(questions):
+            raise ValueError("Generated quiz failed validation")
 
-        with open("latest_quiz.json", "w") as f:
-            json.dump(questions, f, indent=4)
+        
 
         return questions
 
-    except Exception:
-        return {
-            "error": "Failed to generate quiz"
-        }
+    except Exception as e:
+         raise Exception(f"Quiz generation failed: {str(e)}")
+       

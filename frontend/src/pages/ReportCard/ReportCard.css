@@ -1,0 +1,90 @@
+.container {
+  padding: 30px;
+  font-family: Arial, sans-serif;
+  background-color: #f6f8fb;
+  min-height: 100vh;
+}
+
+.title {
+  margin-bottom: 20px;
+  font-size: 28px;
+}
+
+/* loading */
+.loading {
+  padding: 20px;
+  font-size: 18px;
+}
+
+/* summary cards */
+.cardRow {
+  display: flex;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.card {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transition: 0.2s
+}
+.card:hover{
+  transform: translateY(-2px);
+}
+.bigText {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.section {
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* tags */
+.tagContainer {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.greenTag, .redTag {
+  padding: 8px 14px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.greenTag {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.redTag {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.score {
+  font-weight: bold;
+}
+.homeBtn {
+  background: #111;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+.homeBtn:hover {
+  background: #333;
+}

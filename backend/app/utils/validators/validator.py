@@ -1,37 +1,49 @@
-def validate_questions(data):
-    if not isinstance(data, dict):
+def validate_questions(questions):
+
+    if not isinstance(questions, list):
         return False
 
-    if "mcq" not in data or "descriptive" not in data:
+    if len(questions) != 10:
         return False
 
-    if not isinstance(data["mcq"], list):
-        return False
+    mcq_count = 0
+    descriptive_count = 0
 
-    if not isinstance(data["descriptive"], list):
-        return False
-    if len(data["mcq"]) != 8:
-        return False
+    for q in questions:
 
-    if len(data["descriptive"]) != 2:
-        return False
-    # MCQ checks
-    for item in data["mcq"]:
-        if "question" not in item or "options" not in item:
+        if "type" not in q:
             return False
-        if "correct_answer" not in item:
+
+        if "question" not in q:
             return False
-        if item["correct_answer"] not in item["options"]:
+
+        if not q["question"].strip():
             return False
-        if len(item["options"]) != 4:
+
+        if "correct_answer" not in q:
             return False
-        
-        for option in item["options"]:
-            if not isinstance(option, str):
+
+        if q["type"] == "MultiSelect":
+
+            mcq_count += 1
+
+            if "options" not in q:
                 return False
-    # Descriptive checks
-    for item in data["descriptive"]:
-        if "question" not in item:
+
+            if len(q["options"]) != 4:
+                return False
+
+            if q["correct_answer"] not in q["options"]:
+                return False
+
+        elif q["type"] == "Long Answer":
+
+            descriptive_count += 1
+
+        else:
             return False
 
-    return True
+    return (
+        mcq_count == 8
+        and descriptive_count == 2
+    )

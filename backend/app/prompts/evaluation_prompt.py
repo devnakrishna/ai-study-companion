@@ -1,33 +1,27 @@
 EVALUATION_TEMPLATE = """
-You are an AI quiz evaluator.
+You are an AI examiner evaluating student answers.
 
-Question: {question}
-Correct Answer: {correct_answer}
-Student Answer: {user_answer}
+Evaluate each question strictly and return ONLY valid JSON.
 
-Evaluate the answer based on:
-- correctness
-- completeness
-- clarity
+Do NOT include explanations, markdown, or extra text.
 
-Return ONLY valid JSON:
+Return format MUST be exactly like this:
 
-{{
-  "score": number (0-5),
-  "feedback": "2-3 lines explaining strengths and weaknesses"
-}}
+[
+  {{
+    "question": "string",
+    "score": number between 0 and 5,
+    "feedback": "short feedback explaining the score"
+  }}
+]
 
-Scoring:
-0-1: incorrect
-2: partial
-3: mostly correct
-4: strong
-5: perfect
-
-RULES:
-- Be specific, not generic
-- Refer to the student's answer
-- Donot be generic
+Rules:
 - Score must be between 0 and 5
-- No extra text outside JSON
+- Be strict and fair
+- Do not add extra keys
+- Do not wrap output in ``` or any text
+- Output must be a valid JSON array only
+
+Questions:
+{questions}
 """

@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { generateQuiz,submitQuiz } from "../../services/quizService";
+import { evaluateQuiz } from "../../services/quizService";
 import "./Test.css";
 
 function Test() {
@@ -11,25 +13,29 @@ function Test() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [answers, setAnswers] = useState([]);
+  const [sessionId, setSessionId] = useState(null);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, level }),
-      });
-
-      const data = await res.json();
-      setQuestions(data);
+      const data = await generateQuiz(topic, level);
+      if(data){
+        setQuestions(data.questions);
+        setSessionId(data.session_id);
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [topic, level]);
+  
+  useEffect(() => {
+  if (!topic || !level) {
+    navigate("/");
+  }
+}, [topic, level, navigate]);
 
   useEffect(() => {
     if (topic && level) fetchQuestions();
@@ -40,70 +46,73 @@ function Test() {
       <div className="loading-container">
         <div className="loading-card">
           <h2 className="loading-text">
-            Generating your quiz ⏳<span className="dots"></span></h2>
+            Generating your quiz ⏳<span className="dots"></span>
+          </h2>
           <p>Please wait while AI prepares your questions</p>
         </div>
       </div>
     );
 
-  if (!questions.length) return <div className="empty">No questions available.</div>;
+  if (!questions.length)
+    return <div className="empty">No questions available.</div>;
 
-  const mcqQuestions = questions.filter(q => q.type === "MultiSelect");
-  const descQuestions = questions.filter(q => q.type === "Long Answer");
+  const mcqQuestions = questions.filter(
+    (q) => q.type === "MultiSelect"
+  );
 
-  const handleOptionChange = (qIndex, option) => {
-    setAnswers(prev => {
-      const updated = [...prev];
+  const descQuestions = questions.filter(
+    (q) => q.type === "Long Answer"
+  );
 
-      updated[qIndex] = {
-        type: "MultiSelect",
-        question: mcqQuestions[qIndex].question,
-        answer: option,
-      };
+  const handleOptionChange = (index, option) => {
+  setAnswers(prev => {
+    const updated = [...prev];
+    updated[index] = {
+      question_id: mcqQuestions[index].id,
+      user_answer: option,
+    };
+    return updated;
+  });
+};
 
-      return updated;
-    });
-  };
+const handleDescChange = (index, value) => {
+  const baseIndex = mcqQuestions.length + index;
 
-  const handleDescChange = (index, value) => {
-    const baseIndex = mcqQuestions.length + index;
+  setAnswers(prev => {
+    const updated = [...prev];
+    updated[baseIndex] = {
+  question_id: descQuestions[index].id,
+  user_answer: value,
+};
+    return updated;
+  });
+};
 
-    setAnswers(prev => {
-      const updated = [...prev];
-
-      updated[baseIndex] = {
-        type: "Long Answer",
-        question: descQuestions[index].question,
-        answer: value,
-      };
-
-      return updated;
-    });
-  };
 
   const handleSubmit = async () => {
-    const formatted = answers.filter(Boolean);
+  const formatted = answers.filter(Boolean);
 
-    if (formatted.length !== questions.length) {
-      alert("Please answer all questions");
-      return;
-    }
+  if (formatted.length !== questions.length) {
+    alert("Please answer all questions");
+    return;
+  }
 
-    await fetch("http://localhost:8000/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formatted),
-    });
+  await submitQuiz(sessionId, formatted);
 
-    navigate("/result");
-  };
+  const result = await evaluateQuiz(sessionId);
+
+  navigate("/result", { state: { result } });
+};
+
+   
 
   return (
     <div className="quiz-container">
       <h1 className="title">AI Quiz</h1>
 
-      {/* MCQs */}
-      <h2 className="section-title">Multiple Choice Questions</h2>
+      <h2 className="section-title">
+        Multiple Choice Questions
+      </h2>
 
       {mcqQuestions.map((q, i) => (
         <div key={i} className="question-card">
@@ -114,8 +123,10 @@ function Test() {
               <input
                 type="radio"
                 name={`mcq-${i}`}
-                checked={answers[i]?.answer === opt}
-                onChange={() => handleOptionChange(i, opt)}
+                checked={answers[i]?.user_answer=== opt}
+                onChange={() =>
+                  handleOptionChange(i, opt)
+                }
               />
               <span>{opt}</span>
             </label>
@@ -123,20 +134,27 @@ function Test() {
         </div>
       ))}
 
-      {/* Descriptive */}
-      <h2 className="section-title">Descriptive Questions</h2>
+      <h2 className="section-title">
+        Descriptive Questions
+      </h2>
 
       {descQuestions.map((q, i) => (
         <div key={i} className="question-card">
           <p className="question">{q.question}</p>
+
           <textarea
             className="textarea"
-            onChange={(e) => handleDescChange(i, e.target.value)}
+            onChange={(e) =>
+              handleDescChange(i, e.target.value)
+            }
           />
         </div>
       ))}
 
-      <button className="submit-btn" onClick={handleSubmit}>
+      <button
+        className="submit-btn"
+        onClick={handleSubmit}
+      >
         Submit Quiz
       </button>
     </div>

@@ -1,65 +1,60 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { getRecommendations } from "../../services/quizService";
 import "./Result.css";
+import ReviewCard from "../../components/ReviewCard";
 
 const Result = () => {
   const navigate = useNavigate();
-  const [result, setResult] = useState(null);
+  const location = useLocation();
+
+  const { result } = location.state || {};
   const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
-  const evaluate = async () => {
-    const res = await fetch("http://localhost:8000/evaluate", {
-      method: "POST",
-    });
+    const fetchRecommendations = async () => {
+      if (!result) return;
 
-    const data = await res.json();
-    setResult(data);
+      const weakAreas = result.weak_areas || [];
 
-    // 👇 SAFE FALLBACK (important)
-    const weakAreas = data?.weak_areas || [];
+      const recData = await getRecommendations(weakAreas);
+      setRecommendations(recData.recommendations || []);
+    };
 
-    const recRes = await fetch("http://localhost:8000/recommend", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ weak_areas: weakAreas }),
-    });
+    fetchRecommendations();
+  }, [result]);
 
-    const recData = await recRes.json();
-    setRecommendations(recData.recommendations || []);
-  };
+  if (!result) {
+    return <p>No result found</p>;
+  }
 
-  evaluate();
-}, []);
   const scorecard = result?.scorecard;
-  const strong = result?.strong_areas || [];
-  const weak = result?.weak_areas || [];
-  
+  if (!result || !result.scorecard) {
+  return <p>Loading result...</p>;
+}
+  const strong = result.strong_areas || [];
+  const weak = result.weak_areas || [];
+
   return (
     <div className="result-container">
       <h2>Quiz Result</h2>
 
-      {!result && <p>Calculating score...</p>}
+      <div>
+        <h2>
+          Score: {scorecard.total_score}/{scorecard.total_questions}
+        </h2>
 
-      {scorecard && (
-  <div>
-    <h2>
-      Score: {scorecard.total_score}/{scorecard.total_questions}
-    </h2>
+        <h3>Percentage: {scorecard.percentage}%</h3>
 
-    <h3>Percentage: {scorecard.percentage}%</h3>
+        <p>
+          MCQ: {scorecard.mcq.score}/{scorecard.mcq.total}
+        </p>
 
-    <p>
-      MCQ: {scorecard.mcq.score}/{scorecard.mcq.total}
-    </p>
+        <p>
+          Descriptive: {scorecard.descriptive.score}/{scorecard.descriptive.total}
+        </p>
+      </div>
 
-    <p>
-      Descriptive: {scorecard.descriptive.score}/{scorecard.descriptive.total}
-    </p>
-  </div>
-)}
       {strong.length > 0 && (
         <div>
           <h3>🟢 Strong Areas</h3>
@@ -70,6 +65,7 @@ const Result = () => {
           </ul>
         </div>
       )}
+
       {weak.length > 0 && (
         <div>
           <h3>🔴 Weak Areas</h3>
@@ -80,6 +76,7 @@ const Result = () => {
           </ul>
         </div>
       )}
+
       {recommendations.length > 0 && (
         <div>
           <h3>📺 Learn more from YouTube</h3>
@@ -90,48 +87,41 @@ const Result = () => {
 
               <a href={r.youtube} target="_blank" rel="noreferrer">
                 Watch videos
-            </a>
+              </a>
             </div>
           ))}
         </div>
       )}
-      {result?.review?.map((r, i) => (
-  <div key={i} className="review-card">
+      
+      {result.review?.map((r, i) => (
+        <ReviewCard key={i} review={r} />
+      ))}
 
-    <p className="q">{r.question}</p>
+      {result.feedback?.length > 0 && (
+        <div>
+          <h3>AI Feedback</h3>
 
-    <p>
-      <b>Your Answer:</b>{" "}
-      <span className={r.is_correct ? "correct" : "wrong"}>
-        {r.your_answer}
-      </span>
-    </p>
-
-    {r.type === "mcq" && (
-      <p>
-        <b>Correct Answer:</b>{" "}
-        <span className="correct">{r.correct_answer}</span>
-      </p>
-    )}
-  </div>
-))}
-      {result?.feedback?.length > 0 && (
-      <div>
-        <h3>AI Feedback</h3>
-
-        {result.feedback.map((f, i) => (
-          <div key={i} className="feedback-card">
-            <p><b>Q:</b> {f.question}</p>
-            <p><b>Score:</b> {f.score}/5</p>
-            <p>{f.feedback}</p>
-          </div>
-        ))}
-      </div>
-    )}
-
-      <button onClick={() => navigate("/")}>
+          {result.feedback.map((f, i) => (
+            <div key={i} className="feedback-card">
+              <p><b>Q:</b> {f.question}</p>
+              <p><b>Score:</b> {f.score}/5</p>
+              <p>{f.feedback}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="buttonContainer">
+        <button onClick={() => navigate("/performance")}>
+         See Your Overall Performance 📊
+        </button>
+        <button onClick={() => navigate("/report")}
+        className="report-btn">
+        📊 View Full Report Card
+        </button>
+        <button onClick={() => navigate("/")}>
         Back to Home
-      </button>
+        </button>
+      </div>
     </div>
   );
 };

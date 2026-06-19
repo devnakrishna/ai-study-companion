@@ -1,32 +1,31 @@
+import json
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.output_parsers import StrOutputParser
 from app.ai.langchain_config import llm
 from app.prompts.evaluation_prompt import EVALUATION_TEMPLATE
-# Prompt Template
-evaluation_prompt = PromptTemplate(
-    input_variables=["question", "correct_answer", "user_answer"],
+
+prompt = PromptTemplate(
+    input_variables=["questions"],
     template=EVALUATION_TEMPLATE
 )
 
-# Output Parser
-parser = JsonOutputParser()
-
-# Chain
-evaluation_chain = evaluation_prompt | llm | parser
+parser = StrOutputParser()
+evaluation_chain = prompt | llm | parser
 
 
-def evaluate_descriptive(question, correct_answer, user_answer):
+def evaluate_descriptive_batch(inputs):
     try:
         result = evaluation_chain.invoke({
-            "question": question,
-            "correct_answer": correct_answer,
-            "user_answer": user_answer
+            "questions": json.dumps(inputs, indent=2)
         })
-        return result
+
+        cleaned = result.strip().replace("```json", "").replace("```", "")
+        return json.loads(cleaned)
 
     except Exception as e:
         print("EVALUATION ERROR:", e)
-    return {
-        "score": 0,
-        "feedback": "Evaluation failed"
-    }
+
+        return [
+            {"score": 0, "feedback": "Evaluation failed"}
+            for _ in inputs
+        ]

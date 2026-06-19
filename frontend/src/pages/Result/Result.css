@@ -9,6 +9,11 @@
   text-align: center;
   margin-bottom: 20px;
 }
+.buttonContainer {
+  display: flex;
+  gap: 12px;   
+  margin-top: 15px;
+}
 
 .score-box {
   background: #fff;
@@ -62,4 +67,5 @@
   background: #111;
   color: white;
   cursor: pointer;
+  gap: 12px;
 }

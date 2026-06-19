@@ -1,0 +1,19 @@
+.performance-container {
+  padding: 20px;
+}
+
+.performance-card {
+  background: #f5f5f5;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+}
+.back-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+}

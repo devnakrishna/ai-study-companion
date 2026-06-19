@@ -46,6 +46,9 @@ const Home = () => {
       <button onClick={handleStartQuiz} disabled={!topic.trim()}>
         Start Quiz
       </button>
+      <button onClick={() => navigate("/performance")}>
+       View Performance 📊
+       </button>
       </div>
     </div>
   );
