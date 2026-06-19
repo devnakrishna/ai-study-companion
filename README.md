@@ -1,43 +1,71 @@
----
+# 🚀 AI Study Companion
 
-#  AI Study Companion
-
-An AI-powered learning platform that generates quizzes, evaluates answers, and provides personalized feedback and recommendations using **FastAPI, React, LangChain, and Google Gemini API**.
+An AI-powered full-stack learning platform that generates quizzes, evaluates answers, and provides personalized performance insights using **FastAPI, React, LangChain, and Google Gemini API**.
 
 ---
 
-##  Features
+## 🧠 Project Evolution
 
-###  AI Quiz Generation
-
-* Generates MCQ + descriptive questions based on topic and difficulty
-* Powered by **LangChain + Gemini**
-
-###  Answer Evaluation
-
-* Automatic MCQ evaluation (exact matching)
-* AI-based evaluation for descriptive answers
-* Detailed scoring system with percentage breakdown
-
-###  Performance Analysis
-
-* Identifies strong and weak areas
-* Generates structured scorecard
-* Topic-wise analysis
-
-###  Learning Recommendations
-
-* Generates YouTube-based learning links for weak topics
-* Helps targeted revision
-
-###  AI Feedback System
-
-* Provides structured feedback for descriptive answers
-* Suggests improvements and corrections
+This project evolved from a **JSON-based prototype** to a **scalable database-driven system** with AI-powered evaluation and analytics.
 
 ---
 
-##  Tech Stack
+## ✨ Features
+
+### 🧠 AI Quiz Generation
+
+* Generates **8 MCQs + 2 descriptive questions**
+* Based on topic and difficulty
+* Powered by **LangChain + Google Gemini**
+
+---
+
+### 📝 Hybrid Answer Evaluation
+
+* ✅ MCQ → Rule-based evaluation
+* 🤖 Descriptive → AI-based evaluation using LangChain
+* Provides:
+
+  * Score
+  * Feedback
+  * Improvement suggestions
+
+---
+
+### 📊 Performance Analysis
+
+* Topic-wise performance tracking
+* Identifies:
+
+  * Strong areas
+  * Weak areas
+* Generates structured scorecards
+
+---
+
+### 🎯 Personalized Recommendations
+
+* Suggests learning resources based on weak topics
+* Helps focused revision
+
+---
+
+### 💾 Database-Driven System
+
+* Stores:
+
+  * Quiz sessions
+  * Questions
+  * User answers
+* Enables:
+
+  * History tracking
+  * Analytics
+  * Future scalability
+
+---
+
+## 🏗️ Tech Stack
 
 ### Frontend
 
@@ -50,28 +78,31 @@ An AI-powered learning platform that generates quizzes, evaluates answers, and p
 * FastAPI
 * Python
 
-### AI / ML
+### AI / LLM
 
 * LangChain
-* Google Gemini API (Generative AI)
+* Google Gemini API
 
-### Data Handling
+### Database
 
-* JSON-based temporary storage (can be upgraded to DB later)
+* MySQL / PostgreSQL
 
 ---
 
-##  Project Structure
+## 📁 Project Structure
 
 ```
 AI-Study-Companion/
 │
 ├── backend/
 │   ├── app/
-│   │   ├── routes/
-│   │   ├── services/
-│   │   ├── schemas/
-│   │   ├── prompts/
+│   │   ├── ai/                 # LLM configuration
+│   │   ├── core/               # Config & settings
+│   │   ├── db/                 # Database models & connection
+│   │   ├── routes/             # API endpoints
+│   │   ├── services/           # Business logic
+│   │   ├── schemas/            # Request/response validation
+│   │   ├── prompts/            # LangChain prompt templates
 │   │   └── main.py
 │   └── requirements.txt
 │
@@ -80,17 +111,15 @@ AI-Study-Companion/
 │   ├── pages/
 │   └── package.json
 │
-├── latest_quiz.json
-├── submissions.json
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
-##  Setup Instructions
+## ⚙️ Setup Instructions
 
-###  1. Clone Repository
+### 1️⃣ Clone Repository
 
 ```bash
 git clone https://github.com/your-username/ai-study-companion.git
@@ -99,7 +128,7 @@ cd ai-study-companion
 
 ---
 
-###  2. Backend Setup (FastAPI)
+### 2️⃣ Backend Setup (FastAPI)
 
 ```bash
 cd backend
@@ -110,7 +139,9 @@ venv\Scripts\activate   # Windows
 pip install -r requirements.txt
 ```
 
-###  Run Backend
+---
+
+### ▶️ Run Backend
 
 ```bash
 uvicorn app.main:app --reload
@@ -124,7 +155,7 @@ http://localhost:8000
 
 ---
 
-###  3. Frontend Setup (React)
+### 3️⃣ Frontend Setup (React)
 
 ```bash
 cd frontend
@@ -140,9 +171,9 @@ http://localhost:3000
 
 ---
 
-##  Environment Variables
+## 🔐 Environment Variables
 
-Create a `.env` file inside backend:
+Create a `.env` file inside `backend/`:
 
 ```
 GEMINI_API_KEY=your_api_key_here
@@ -150,27 +181,27 @@ GEMINI_API_KEY=your_api_key_here
 
 ---
 
-##  API Endpoints
+## 🔌 API Endpoints
 
-###  Quiz Generation
+### Generate Quiz
 
 ```
-POST /generate
+POST /generate-quiz
 ```
 
-###  Submit Answers
+### Submit Answers
 
 ```
 POST /submit
 ```
 
-###  Evaluation
+### Evaluate Answers
 
 ```
 POST /evaluate
 ```
 
-###  Recommendations
+### Get Recommendations
 
 ```
 POST /recommend
@@ -178,50 +209,50 @@ POST /recommend
 
 ---
 
-##  How It Works
+## 🔄 Workflow
 
-1. User enters topic + difficulty
-2. Backend generates quiz using AI
-3. User submits answers
-4. System evaluates:
+1. User selects topic & difficulty
+2. Backend generates quiz using LangChain
+3. Quiz session stored in database
+4. User submits answers
+5. System evaluates:
 
-   * MCQ → rule-based
+   * MCQs → rule-based
    * Descriptive → AI-based
-5. Generates:
+6. Results generated:
 
-   * Scorecard
-   * Weak areas
-   * YouTube recommendations
-
----
-
-##  Current Limitations
-
-* Uses JSON files instead of database
-* No authentication system yet
-* Recommendations are link-based (not semantic search yet)
+   * Score
+   * Feedback
+   * Topic analysis
+7. Recommendations generated based on weak areas
 
 ---
 
-##  Future Improvements
+## ⚠️ Current Limitations
 
-* Add database (PostgreSQL / MongoDB)
-* Add user authentication
-* Improve recommendation system (real YouTube API / vector search)
-* Add quiz history dashboard
-* Deploy backend + frontend
+* No authentication system
+* Recommendation system is basic
+* UI can be further improved
 
 ---
 
-##  Author
+## 🚀 Future Improvements
 
-Built as a personal AI learning project to explore:
+* Add authentication & user profiles
+* Implement quiz history dashboard
+* Advanced recommendation system (vector search)
+* Downloadable performance reports
+* Deploy full-stack application
 
-* AI integration in web apps
+---
+
+## 👨‍💻 Author
+
+Developed as a full-stack AI project to explore:
+
+* AI-powered applications
 * LangChain workflows
-* Full-stack FastAPI + React architecture
+* FastAPI backend architecture
+* React frontend development
 
 ---
-
-
-
