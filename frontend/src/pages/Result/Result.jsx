@@ -16,7 +16,6 @@ const Result = () => {
       if (!result) return;
 
       const weakAreas = result.weak_areas || [];
-
       const recData = await getRecommendations(weakAreas);
       setRecommendations(recData.recommendations || []);
     };
@@ -29,9 +28,10 @@ const Result = () => {
   }
 
   const scorecard = result?.scorecard;
-  if (!result || !result.scorecard) {
-  return <p>Loading result...</p>;
-}
+  if (!scorecard) {
+    return <p>Loading result...</p>;
+  }
+
   const strong = result.strong_areas || [];
   const weak = result.weak_areas || [];
 
@@ -92,34 +92,21 @@ const Result = () => {
           ))}
         </div>
       )}
-      
+
+      {/* ✅ ONLY ONE PLACE FOR QUESTIONS */}
       {result.review?.map((r, i) => (
         <ReviewCard key={i} review={r} />
       ))}
 
-      {result.feedback?.length > 0 && (
-        <div>
-          <h3>AI Feedback</h3>
-
-          {result.feedback.map((f, i) => (
-            <div key={i} className="feedback-card">
-              <p><b>Q:</b> {f.question}</p>
-              <p><b>Score:</b> {f.score}/5</p>
-              <p>{f.feedback}</p>
-            </div>
-          ))}
-        </div>
-      )}
       <div className="buttonContainer">
         <button onClick={() => navigate("/performance")}>
-         See Your Overall Performance 📊
+          See Your Overall Performance 📊
         </button>
-        <button onClick={() => navigate("/report")}
-        className="report-btn">
-        📊 View Full Report Card
+        <button onClick={() => navigate("/report")} className="report-btn">
+          📊 View Full Report Card
         </button>
         <button onClick={() => navigate("/")}>
-        Back to Home
+          Back to Home
         </button>
       </div>
     </div>

@@ -69,3 +69,17 @@
   cursor: pointer;
   gap: 12px;
 }
+.correct {
+  color: #2ecc71;   /* green */
+  font-weight: 600;
+}
+
+.average {
+  color: #dccc6d;   /* yellow */
+  font-weight: 600;
+}
+
+.wrong {
+  color: #e74c3c;   /* red */
+  font-weight: 600;
+}

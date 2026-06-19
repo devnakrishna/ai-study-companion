@@ -14,7 +14,10 @@ export default function ReportCard() {
   useEffect(() => {
     fetch("http://localhost:8000/report/1")
       .then(res => res.json())
-      .then(data => setData(data));
+      .then(data => {
+        console.log("REPORT :" , data);
+        setData(data);
+  });
   }, []);
 
   if (!data || Object.keys(data).length === 0) {
@@ -45,7 +48,7 @@ const uniqueStrongTopics = [...new Set(strong_topics)];
 
         <div className="card">
           <h3>Average Score</h3>
-          <p className="bigText">{((average_score/5)*100).toFixed(1)}%</p>
+          <p className="bigText">{average_score.toFixed(1)}%</p>
         </div>
 
       </div>
