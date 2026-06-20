@@ -47,6 +47,7 @@ class QuizSession(Base):
 
     total_questions = Column(Integer, default=0)
     score = Column(Integer, default=0)
+    percentage = Column(Float)
      
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     created_by = Column(String(100), nullable=True)

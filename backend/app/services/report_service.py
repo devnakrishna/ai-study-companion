@@ -12,7 +12,11 @@ def generate_report(user_id: int, db: Session):
     ).all()
 
     total_quizzes = len(sessions)
-    avg_score = sum([s.score for s in sessions]) / total_quizzes if total_quizzes else 0
+    valid_sessions = [s for s in sessions if s.percentage is not None]
+    avg_score = (
+        sum([s.percentage for s in valid_sessions]) / len(valid_sessions)
+        if valid_sessions else 0
+    )
 
     strong = []
     weak = []

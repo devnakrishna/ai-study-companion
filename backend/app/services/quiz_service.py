@@ -4,9 +4,7 @@ from langchain_core.output_parsers import StrOutputParser
 from app.ai.langchain_config import llm
 from app.utils.validators.validator import validate_questions
 from app.prompts.quiz_prompt import QUIZ_TEMPLATE
-from app.core.paths import QUIZ_FILE
 
-from pathlib import Path
 
 quiz_prompt = PromptTemplate(
     input_variables=["topic", "level"],

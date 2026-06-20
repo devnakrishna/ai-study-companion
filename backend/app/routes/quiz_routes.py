@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post("/create-session")
 def create_session(request: QuizRequest, db: Session = Depends(get_db)):
-    print("🔥 create session api hit")
+    
     level=request.level.lower()
   
     new_session = create_quiz_session(db, request.topic, level)
@@ -65,7 +65,7 @@ def submit_quiz(session_id: int, submission: list = Body(...), db: Session = Dep
             continue
         is_correct = None
         marks = 0
-        print("TYPE:", question.question_type)
+        
 
         if question.question_type.lower() in["multiselect", "mcq","multiplechoice"]:
             if user_answer == question.correct_answer:

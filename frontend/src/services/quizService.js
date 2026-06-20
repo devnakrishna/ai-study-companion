@@ -8,7 +8,7 @@ export const generateQuiz = async (topic, level) => {
       headers: {
         "Content-Type": "application/json",
       },
-      // Send the topic and level to FastAPI
+      
       body: JSON.stringify({ topic: topic, level: level }), 
     });
 

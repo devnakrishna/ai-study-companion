@@ -17,12 +17,11 @@ def evaluate_answers(session_id, db):
     desc_score = 0
     total_desc = 0
 
-    feedback = []
     review_data = []
     strong_areas = []
     weak_areas = []
 
-    # ✅ STEP 1: collect descriptive questions
+    # STEP 1: collect descriptive questions
     desc_inputs = []
     desc_mapping = []
 
@@ -34,7 +33,7 @@ def evaluate_answers(session_id, db):
         if not question:
             continue
 
-        # ✅ MCQ handling
+        # MCQ
         if question.question_type.lower() in ["multiselect", "mcq"]:
             total_mcq += 1
 
@@ -52,7 +51,7 @@ def evaluate_answers(session_id, db):
                 "is_correct": ans.is_correct
             })
 
-        # ✅ Collect descriptive (NO API CALL HERE)
+        # Descriptive
         elif question.question_type.lower() == "long answer":
             desc_inputs.append({
                 "question": question.question_text,
@@ -62,10 +61,9 @@ def evaluate_answers(session_id, db):
             })
             desc_mapping.append(ans)
 
-    # ✅ STEP 2: CALL AI ONCE
+   
     desc_results = evaluate_descriptive_batch(desc_inputs)
 
-    # ✅ STEP 3: process AI results
     for i, res in enumerate(desc_results):
         score = res.get("score", 0)
         fb = res.get("feedback", "")
@@ -77,16 +75,12 @@ def evaluate_answers(session_id, db):
         ans_obj.marks_awarded = score / 5
         ans_obj.ai_feedback = fb
 
-        feedback.append({
+        review_data.append({
+            "type": "descriptive",
             "question": desc_inputs[i]["question"],
+            "your_answer": desc_inputs[i]["user_answer"],
             "score": score,
             "feedback": fb
-        })
-
-        review_data.append({
-            "type": "desc",
-            "question": desc_inputs[i]["question"],
-            "your_answer": desc_inputs[i]["user_answer"]
         })
 
         if score >= 3:
@@ -94,7 +88,7 @@ def evaluate_answers(session_id, db):
         else:
             weak_areas.append(desc_inputs[i]["topic"])
 
-    # ✅ FINAL CALCULATIONS
+    # FINAL CALCULATIONS
     strong_areas = list(set(strong_areas))
     weak_areas = list(set(weak_areas))
 
@@ -135,7 +129,6 @@ def evaluate_answers(session_id, db):
                 "total": total_desc
             }
         },
-        "feedback": feedback,
         "review": review_data,
         "strong_areas": strong_areas,
         "weak_areas": weak_areas
