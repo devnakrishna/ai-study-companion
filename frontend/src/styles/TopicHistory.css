@@ -1,0 +1,18 @@
+.history-page {
+  max-width: 800px;
+  margin: 40px auto;
+}
+
+.history-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.history-card {
+  transition: 0.2s ease;
+}
+
+.history-card:hover {
+  transform: translateY(-3px);
+}

@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000";
+ const BASE_URL = "http://localhost:8000";
 
 export const generateQuiz = async (topic, level) => {
   try {
@@ -34,7 +34,10 @@ export const submitQuiz = async (sessionId, answers) => {
 
   return await response.json();
 };
-
+export const getTopicHistory = async (topic) => {
+  const response = await fetch(`${BASE_URL}/topic-history/${topic}`);
+  return await response.json();
+};
 export const evaluateQuiz = async (sessionId) => {
   const response = await fetch(`${BASE_URL}/evaluate/${sessionId}`, {
     method: "POST",

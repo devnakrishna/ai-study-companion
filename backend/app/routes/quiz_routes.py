@@ -4,6 +4,7 @@ import json
 
 from app.schemas.quiz_schema import QuizRequest
 from app.services.quiz_service import generate_quiz
+from app.services.evaluation_service import evaluate_answers
 from app.services.session_service import create_quiz_session, save_questions
 from app.db.database import get_db
 from app.db.models import UserAnswer, Question, QuizSession
@@ -46,36 +47,24 @@ def create_session(request: QuizRequest, db: Session = Depends(get_db)):
         "session_id": new_session.id,
         "questions": formatted
     }
-
-
-
 @router.post("/submit/{session_id}")
 def submit_quiz(session_id: int, submission: list = Body(...), db: Session = Depends(get_db)):
 
-    total_score = 0
-
     for ans in submission:
-
         question_id = ans["question_id"]
         user_answer = ans["user_answer"]
 
         question = db.query(Question).filter(Question.id == question_id).first()
-
         if not question:
             continue
+
         is_correct = None
         marks = 0
-        
 
-        if question.question_type.lower() in["multiselect", "mcq","multiplechoice"]:
-            if user_answer == question.correct_answer:
-                is_correct = True
-                marks = 1
-            else:
-                is_correct = False
-                marks = 0
+        if question.question_type.lower() in ["multiselect", "mcq", "multiplechoice"]:
+            is_correct = (user_answer == question.correct_answer)
+            marks = 1 if is_correct else 0
 
-       
         new_answer = UserAnswer(
             session_id=session_id,
             question_id=question_id,
@@ -86,15 +75,7 @@ def submit_quiz(session_id: int, submission: list = Body(...), db: Session = Dep
         )
         db.add(new_answer)
 
-        total_score += marks
-
     db.commit()
-    session = db.query(QuizSession).filter(QuizSession.id == session_id).first()
+    result = evaluate_answers(session_id, db)
 
-    if session:
-        session.score = total_score
-        db.commit()
-    return {
-        "message": "Answers submitted successfully",
-        "score": total_score
-    }
+    return result

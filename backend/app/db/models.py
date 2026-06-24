@@ -136,7 +136,7 @@ class TopicPerformance(Base):
     total_score = Column(Integer, default=0)
 
     avg_score = Column(Float, default=0.0)
-    last_score = Column(Integer, default=0)
+    last_score = Column(Float, default=0.0)
 
     last_updated = Column(DateTime(timezone=True), server_default=func.now())
 

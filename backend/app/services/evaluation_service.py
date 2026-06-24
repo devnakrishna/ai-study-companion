@@ -65,14 +65,15 @@ def evaluate_answers(session_id, db):
     desc_results = evaluate_descriptive_batch(desc_inputs)
 
     for i, res in enumerate(desc_results):
-        score = res.get("score", 0)
+        score = max(0, min(res.get("score", 0), 5))
         fb = res.get("feedback", "")
 
         total_desc += 1
+               
         desc_score += score / 5
 
         ans_obj = desc_mapping[i]
-        ans_obj.marks_awarded = score / 5
+        ans_obj.marks_awarded = score 
         ans_obj.ai_feedback = fb
 
         review_data.append({

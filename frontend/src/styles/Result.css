@@ -1,0 +1,146 @@
+.result-page {
+  padding: 20px;
+  max-width: 1000px;
+  margin: auto;
+}
+
+/* HERO */
+.result-hero {
+  text-align: center;
+  margin-bottom: 20px;
+  animation: fadeIn 0.4s ease;
+}
+
+.score {
+  font-size: 40px;
+  color: var(--primary);
+}
+
+/* ACTION BUTTONS */
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+  flex-direction:row;
+  flex-wrap: nowrap;
+}
+.actions .btn {
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+
+.actions .btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25);
+}
+
+
+.actions .btn-secondary {
+  background: rgba(229, 231, 235, 0.7);
+  backdrop-filter: blur(6px);
+}
+
+
+.actions .btn-secondary:hover {
+  background: rgba(209, 213, 219, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* SUMMARY */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.summary-card {
+  text-align: center;
+  transition: 0.3s;
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+}
+
+/* SECTION */
+.section {
+  margin-top: 20px;
+}
+
+.accordion-title {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.accordion-title.correct {
+  background: #e8fff1;
+}
+
+.accordion-title.wrong {
+  background: #fff1f1;
+}
+
+/* GRID CARDS */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* REVIEW CARD */
+.review-card {
+  padding: 14px;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: 0.3s ease;
+}
+
+.review-card:hover {
+  transform: translateY(-3px);
+}
+
+/* COLORS */
+.correct-card {
+  border-left: 4px solid #22c55e;
+}
+
+.wrong-card {
+  border-left: 4px solid #ef4444;
+}
+
+/* AI FEEDBACK */
+.ai-feedback {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+/* SCORE */
+.score-mini {
+  margin-top: 8px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ANIMATION */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
