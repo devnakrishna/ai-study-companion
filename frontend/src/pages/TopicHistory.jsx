@@ -10,13 +10,17 @@ function TopicHistory() {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    const fetchHistory = async () => {
+  const fetchHistory = async () => {
+    try {
       const res = await getTopicHistory(topic);
-      setData(res);
-    };
+      setData(res || []);
+    } catch (err) {
+      console.error("Failed to load topic history", err);
+    }
+  };
 
-    fetchHistory();
-  }, [topic]);
+  fetchHistory();
+}, [topic]);
 
   return (
     <div className="history-page">

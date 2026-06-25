@@ -7,39 +7,73 @@ function Login() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
 
   const navigate = useNavigate();
-  const allowedDomain = "@college.edu"; 
 
-  const handleLogin = (e) => {
-    e.preventDefault(); // Prevents optional form reload triggers
+  const handleLogin = async (e) => {
+    e.preventDefault();
     setError("");
 
-    if (!email) {
-      setError("Email is required");
-      return;
-    }
-
-    if (!email.endsWith(allowedDomain)) {
-      setError(`Invalid user. Please use your college ID`);
+    if (!email || !password) {
+      setError("Email and password is required");
       return;
     }
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      localStorage.setItem("user", email);
-      navigate(email.includes("admin") ? "/admin" : "/home");
-    }, 500);
+    try {
+      const res = await fetch("http://localhost:8000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ 
+          email: email.trim(),
+          password: password 
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.detail);
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem("user_id", data.user_id);
+      localStorage.setItem("name", data.name);
+      localStorage.setItem("email", data.email);
+      localStorage.setItem("college", data.college);
+      localStorage.setItem("department", data.department);
+
+      navigate("/home");
+    } catch (err) {
+      setError("Server error");
+    }
+
+    setLoading(false);
   };
 
   return (
     <div className="login-container">
+      
+      {/* --- UPGRADED LEFT PANEL --- */}
       <div className="login-left">
-        <h1>AI Study Companion</h1>
-        <p>Learn smarter. Track progress. Improve faster.</p>
+        {/* Animated Background Orbs */}
+        <div className="ambient-orb orb-1"></div>
+        <div className="ambient-orb orb-2"></div>
+
+        <div className="login-left-content">
+          <div className="badge">✨ Your Personal AI Tutor</div>
+          <h1>AI Study Companion</h1>
+          <p>Learn smarter. Track progress. Improve faster.</p>
+
+          
+        </div>
       </div>
+      {/* --------------------------- */}
 
       <div className="login-right">
         <div className="card login-card">
@@ -54,7 +88,13 @@ function Login() {
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
             />
-
+            <input
+              type="password"
+              className="input"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
             
             {error && <div className="error-message">{error}</div>}
 

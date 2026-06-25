@@ -23,7 +23,9 @@ class User(Base):
 
     name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False)
-
+    college = Column(String(150))
+    password_hash = Column(String(255))
+    department = Column(String(100))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     created_by = Column(String(100), nullable=True)
 

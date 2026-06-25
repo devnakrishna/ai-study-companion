@@ -1,0 +1,42 @@
+
+/* DASHBOARD LAYOUT */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* HERO */
+.hero-card {
+  padding: 25px;
+}
+
+.muted {
+  color: gray;
+}
+
+/* GRID */
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+/* STATS */
+.stat-card {
+  padding: 20px;
+  transition: 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+}
+
+/* CTA */
+.cta-card {
+  padding: 30px;
+  text-align: center;
+  background: linear-gradient(135deg, #111827, #1f2937);
+  color: white;
+  border-radius: 12px;
+}

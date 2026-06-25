@@ -10,7 +10,22 @@ def evaluate_answers(session_id, db):
     ).all()
 
     if not answers:
-        raise ValueError("No answers found")
+        return {
+            "scorecard": {
+                "total_score": 0,
+                "total_questions": 0,
+                "percentage": 0,
+                "mcq": {"score": 0, "total": 0},
+                "descriptive": {"score": 0, "total": 0}
+            },
+            "review": [],
+            "insights": {
+                "strong_topics": [],
+                "weak_topics": [],
+                "skillset": "Beginner"
+            }
+            
+    }
 
     mcq_score = 0
     total_mcq = 0
@@ -64,30 +79,30 @@ def evaluate_answers(session_id, db):
    
     desc_results = evaluate_descriptive_batch(desc_inputs)
 
-    for i, res in enumerate(desc_results):
+    for res, ans_obj, input_obj in zip(desc_results, desc_mapping, desc_inputs):
+
         score = max(0, min(res.get("score", 0), 5))
         fb = res.get("feedback", "")
 
         total_desc += 1
-               
         desc_score += score / 5
 
-        ans_obj = desc_mapping[i]
-        ans_obj.marks_awarded = score 
+        ans_obj.marks_awarded = score
         ans_obj.ai_feedback = fb
 
         review_data.append({
             "type": "descriptive",
-            "question": desc_inputs[i]["question"],
-            "your_answer": desc_inputs[i]["user_answer"],
+            "question": input_obj["question"],
+            "your_answer": input_obj["user_answer"],
             "score": score,
             "feedback": fb
         })
 
         if score >= 3:
-            strong_areas.append(desc_inputs[i]["topic"])
+            strong_areas.append(input_obj["topic"])
         else:
-            weak_areas.append(desc_inputs[i]["topic"])
+            weak_areas.append(input_obj["topic"])
+      
 
     # FINAL CALCULATIONS
     strong_areas = list(set(strong_areas))
@@ -100,6 +115,7 @@ def evaluate_answers(session_id, db):
     session = db.query(QuizSession).filter(
         QuizSession.id == session_id
     ).first()
+    
 
     if session:
         session.score = total_score
@@ -109,28 +125,39 @@ def evaluate_answers(session_id, db):
 
     update_topic_performance(
         db,
-        user_id=1,
+        user_id=session.user_id,
         topic=session.topic,
-        normalized_score=normalized
+        normalized_score=normalized,
+        session_id=session_id 
     )
 
     db.commit()
 
     return {
-        "scorecard": {
-            "total_score": round(total_score, 2),
-            "total_questions": total_questions,
-            "percentage": round(percentage, 2),
-            "mcq": {
-                "score": mcq_score,
-                "total": total_mcq
-            },
-            "descriptive": {
-                "score": round(desc_score, 2),
-                "total": total_desc
-            }
+    "scorecard": {
+        "total_score": round(total_score, 2),
+        "total_questions": total_questions,
+        "percentage": round(percentage, 2),
+        "mcq": {
+            "score": mcq_score,
+            "total": total_mcq
         },
-        "review": review_data,
-        "strong_areas": strong_areas,
-        "weak_areas": weak_areas
+        "descriptive": {
+            "score": round(desc_score, 2),
+            "total": total_desc
+        }
+    },
+    "review": review_data,
+
+    
+    "insights": {
+        "strong_topics": strong_areas,
+        "weak_topics": weak_areas,
+        "skillset": (
+            "Advanced" if percentage >= 75 else
+            "Intermediate" if percentage >= 50 else
+            "Beginner"
+        )
     }
+}
+      

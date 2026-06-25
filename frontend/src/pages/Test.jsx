@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { generateQuiz, submitQuiz, evaluateQuiz } from "../services/quizService";
 import "../styles/Test.css";
@@ -11,232 +11,253 @@ function Test() {
 
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [answers, setAnswers] = useState([]);
+  const [answers, setAnswers] = useState({});
   const [sessionId, setSessionId] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const [timeLeft, setTimeLeft] = useState(600);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
-  const [warningShown, setWarningShown] = useState(false);
-
-  // 🔥 IMPORTANT: keep latest values in refs (fixes auto-submit bug)
-  const answersRef = useRef([]);
-  const sessionRef = useRef(null);
-  const submittedRef = useRef(false);
-
-  useEffect(() => {
-    answersRef.current = answers;
-  }, [answers]);
-
-  useEffect(() => {
-    sessionRef.current = sessionId;
-  }, [sessionId]);
-
-  const mcqQuestions = questions.filter(q => q.type === "MultiSelect");
-  const descQuestions = questions.filter(q => q.type === "Long Answer");
-
-  const answeredCount = answers.filter(
-    a => a && a.user_answer && a.user_answer.toString().trim() !== ""
-  ).length;
-
-  const totalCount = questions.length;
 
   // ---------------- FETCH ----------------
   const fetchQuestions = useCallback(async () => {
     setLoading(true);
-    try {
-      const data = await generateQuiz(topic, level);
-      if (data) {
-        setQuestions(data.questions);
-        setSessionId(data.session_id);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    const data = await generateQuiz(topic, level);
+    setQuestions(data.questions);
+    setSessionId(data.session_id);
+    setLoading(false);
   }, [topic, level]);
-
-  useEffect(() => {
-    if (!topic || !level) navigate("/");
-  }, [topic, level, navigate]);
 
   useEffect(() => {
     if (topic && level) fetchQuestions();
   }, [topic, level, fetchQuestions]);
 
-  // ---------------- AUTO SUBMIT CORE ----------------
-  const submitFlow = async () => {
-    if (submittedRef.current) return;
-    submittedRef.current = true;
-
-    const formatted = answersRef.current.filter(Boolean);
-
-    try {
-      await submitQuiz(sessionRef.current, formatted);
-      const result = await evaluateQuiz(sessionRef.current);
-      navigate("/result", { state: { result } });
-    } catch (err) {
-      console.error("Auto submit failed:", err);
-    }
-  };
+  const allQuestions = questions;
+  const currentQuestion = allQuestions[currentIndex];
 
   // ---------------- TIMER ----------------
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (!questions.length) return;
+
+    const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          submitFlow();
+          handleSubmit();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(timer);
+  }, [questions]);
 
-  // ---------------- 5 MIN WARNING ----------------
-  useEffect(() => {
-    if (timeLeft === 300 && !warningShown) {
-      alert("⚠️ 5 minutes left!");
-      setWarningShown(true);
+  // ---------------- FORMAT ANSWERS ----------------
+  const getFormattedAnswers = () => {
+    return Object.entries(answers).map(([qid, ans]) => ({
+      question_id: Number(qid),
+      user_answer: ans
+    }));
+  };
+
+  // ---------------- SUBMIT ----------------
+  const handleSubmit = async () => {
+    if (!sessionId) return;
+
+    try {
+      await submitQuiz(sessionId, getFormattedAnswers());
+      const result = await evaluateQuiz(sessionId);
+      navigate("/result", { state: { result } });
+    } catch (err) {
+      console.error(err);
+      navigate("/result", {
+        state: { result: { scorecard: {}, review: [] } }
+      });
     }
-  }, [timeLeft, warningShown]);
+  };
 
-  // ---------------- TAB SWITCH CONTROL ----------------
+  // ---------------- ANSWER ----------------
+  const setAnswer = (qid, value) => {
+    setAnswers(prev => ({
+      ...prev,
+      [qid]: value
+    }));
+  };
+
+  // ---------------- TAB SWITCH (FIXED RELIABLE) ----------------
   useEffect(() => {
     const handleVisibility = () => {
       if (document.hidden) {
         setTabSwitchCount(prev => {
-          const next = prev + 1;
+          const newCount = prev + 1;
 
-          if (next === 1) {
-            alert("⚠️ Warning: next tab switch will auto-submit!");
-          } else {
-            submitFlow();
+          if (newCount === 1) {
+            alert("⚠️ Warning: Next tab switch will auto-submit");
           }
 
-          return next;
+          if (newCount >= 2) {
+            setTimeout(() => {
+              handleSubmit(); // GUARANTEED EXECUTION
+            }, 200);
+          }
+
+          return newCount;
         });
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, []);
+  }, [answers, sessionId]);
 
-  // ---------------- BLOCK BACK BUTTON PROPERLY ----------------
+  // ---------------- BACK BUTTON BLOCK (FIXED) ----------------
   useEffect(() => {
     window.history.pushState(null, "", window.location.href);
 
-    const onBack = () => {
+    const handleBack = () => {
+      alert("⚠️ You cannot go back during quiz. Submitting...");
+
+      handleSubmit();
+
       window.history.pushState(null, "", window.location.href);
-      alert("⚠️ You cannot go back during quiz!");
     };
 
-    window.addEventListener("popstate", onBack);
+    window.addEventListener("popstate", handleBack);
 
-    return () => window.removeEventListener("popstate", onBack);
-  }, []);
+    return () => window.removeEventListener("popstate", handleBack);
+  }, [answers]);
 
-  // ---------------- SUBMIT BUTTON ----------------
-  const handleSubmit = async () => {
-    if (answeredCount !== totalCount) {
-      alert("Please answer all questions");
-      return;
-    }
-
-    submitFlow();
-  };
-
-  // ---------------- ANSWERS ----------------
-  const handleOptionChange = (index, option) => {
-    setAnswers(prev => {
-      const updated = [...prev];
-      updated[index] = {
-        question_id: mcqQuestions[index].id,
-        user_answer: option,
-      };
-      return updated;
-    });
-  };
-
-  const handleDescChange = (index, value) => {
-    const baseIndex = mcqQuestions.length + index;
-
-    setAnswers(prev => {
-      const updated = [...prev];
-
-      if (!value || value.trim() === "") {
-        updated[baseIndex] = null;
-      } else {
-        updated[baseIndex] = {
-          question_id: descQuestions[index].id,
-          user_answer: value,
-        };
-      }
-
-      return updated;
-    });
-  };
-
-  // ---------------- UI ----------------
-  if (loading) return <div className="empty">Loading...</div>;
-  if (!questions.length) return <div className="empty">No questions</div>;
-
-  return (
-    <div className="quiz-page">
-
-      {/* HUD (UNCHANGED UI STYLE) */}
-      <div className="quiz-hud card" style={{ position: "sticky", top: 0, zIndex: 999 }}>
-        <div>📊 {answeredCount}/{totalCount} answered</div>
-        <div>
-          ⏱ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+  // ---------------- LOADING (PRESERVED) ----------------
+  if (loading) {
+    return (
+      <div className="ai-loading-page">
+        <div className="ai-loading-card">
+          <div className="ai-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <h2>Generating your assessment</h2>
+          <p className="ai-subtext">Preparing questions for:</p>
+          <div className="ai-topic">{topic}</div>
         </div>
       </div>
+    );
+  }
 
-      {/* QUESTIONS */}
-      <div className="quiz-grid">
+  if (!questions.length) return <div>No questions</div>;
 
-        {mcqQuestions.map((q, i) => (
-          <div className="glass-question" key={i}>
-            <h3>{i + 1}. {q.question}</h3>
+  return (
+    <div className="test-page-light">
 
-            <div className="options">
-              {q.options.map((opt, j) => (
-                <label key={j} className="option-card">
-                  <input
-                    type="radio"
-                    name={`q-${i}`}
-                    checked={answers[i]?.user_answer === opt}
-                    onChange={() => handleOptionChange(i, opt)}
-                  />
-                  <span>{opt}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
+      {/* HEADER */}
+      <div className="test-header">
 
-        {descQuestions.map((q, i) => (
-          <div className="glass-question" key={i}>
-            <h3>{mcqQuestions.length + i + 1}. {q.question}</h3>
+  <div>
+    <h2>Assessment</h2>
 
+    {/* PROGRESS BAR */}
+    <div className="progress-bar">
+      <div
+        className="progress-fill"
+        style={{
+          width: `${(Object.keys(answers).length / questions.length) * 100}%`
+        }}
+      />
+    </div>
+
+  </div>
+
+  <div className="hud-box">
+
+    {/* ANSWERED */}
+    <div className="answered-pill">
+      {Object.keys(answers).length} / {questions.length}
+    </div>
+
+    {/* BIG TIMER */}
+    <div className="timer-box big-timer">
+      ⏱ {Math.floor(timeLeft / 60)}:
+      {String(timeLeft % 60).padStart(2, "0")}
+    </div>
+
+  </div>
+
+</div>
+  
+
+      {/* MAIN */}
+      <div className="layout-light">
+
+        {/* QUESTION */}
+        <div className="question-card">
+
+          <h2 className="question-title">
+            Q{currentIndex + 1}. {currentQuestion.question}
+          </h2>
+
+          {currentQuestion.type === "MultiSelect" ? (
+            currentQuestion.options.map((opt, i) => (
+              <label key={i} className="option-light">
+                <input
+                  type="radio"
+                  checked={answers[currentQuestion.id] === opt}
+                  onChange={() => setAnswer(currentQuestion.id, opt)}
+                />
+                {opt}
+              </label>
+            ))
+          ) : (
             <textarea
-              className="glass-textarea"
-              onChange={(e) => handleDescChange(i, e.target.value)}
+              className="text-light"
+              value={answers[currentQuestion.id] || ""}
+              onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
             />
+          )}
+
+          <div className="nav-buttons">
+            <button disabled={currentIndex === 0}
+              onClick={() => setCurrentIndex(i => i - 1)}>
+              Prev
+            </button>
+
+            {currentIndex === questions.length - 1 ? (
+              <button onClick={handleSubmit}>
+                Submit
+              </button>
+            ) : (
+              <button onClick={() => setCurrentIndex(i => i + 1)}>
+                Next
+              </button>
+            )}
           </div>
-        ))}
-      </div>
 
-      {/* SUBMIT */}
-      <div className="submit-bar">
-        <button className="submit-btn" onClick={handleSubmit}>
-          Submit Quiz →
-        </button>
-      </div>
+        </div>
 
+        {/* SIDEBAR */}
+        <div className="side-panel-cards">
+
+          <h3>Questions</h3>
+
+          <div className="card-grid">
+            {questions.map((q, i) => {
+              const answered = answers[q.id];
+
+              return (
+                <div
+                  key={q.id}
+                  className={`q-card ${answered ? "done" : ""}`}
+                  onClick={() => setCurrentIndex(i)}
+                >
+                  <div className="q-num">Q{i + 1}</div>
+                  <div className="q-status">
+                    {answered ? "✔ Answered" : "Pending"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+
+      </div>
     </div>
   );
 }

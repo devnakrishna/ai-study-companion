@@ -7,10 +7,13 @@ from app.db.models import TopicPerformance, QuizSession
 router = APIRouter()
 
 
-@router.get("/topic-performance")
-def get_topic_performance(db: Session = Depends(get_db)):
+@router.get("/topic-performance/{user_id}")
+def get_topic_performance(user_id: int, db: Session = Depends(get_db)):
+    
 
-    records = db.query(TopicPerformance).all()
+    records = db.query(TopicPerformance).filter(
+    TopicPerformance.user_id == user_id
+).all()
 
     return [
         {
@@ -22,22 +25,23 @@ def get_topic_performance(db: Session = Depends(get_db)):
         for r in records
     ]
 
-@router.get("/topic-history/{topic}")
-def get_topic_history(topic: str, db: Session = Depends(get_db)):
+@router.get("/topic-history/{user_id}/{topic}")
+def get_topic_history(user_id: int, topic: str, db: Session = Depends(get_db)):
 
     sessions = db.query(QuizSession).filter(
+        QuizSession.user_id == user_id,   # 🔥 CRITICAL FIX
         QuizSession.topic == topic,
-        QuizSession.percentage != None   
+        QuizSession.percentage != None
     ).order_by(QuizSession.id.desc()).all()
 
-    result = []
-
-    for s in sessions:
-        result.append({
+    return [
+        {
             "id": s.id,
             "score": s.score,
             "percentage": s.percentage,
             "created_at": str(s.created_at)
-        })
-
-    return result
+        }
+        for s in sessions
+    ]
+  
+  

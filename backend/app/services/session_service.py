@@ -2,9 +2,9 @@ import json
 from app.db.models import QuizSession, Question
 
 
-def create_quiz_session(db, topic, level):
+def create_quiz_session(db,user_id, topic, level):
     new_session = QuizSession(
-        user_id=1,
+        user_id=user_id,
         topic=topic,
         level=level,
         total_questions=0,
@@ -18,7 +18,6 @@ def create_quiz_session(db, topic, level):
 
     return new_session
 
-
 def save_questions(db, session_id, questions):
     for q in questions:
         new_question = Question(
@@ -30,7 +29,14 @@ def save_questions(db, session_id, questions):
             topic=q["topic"],
             created_by="system"
         )
-
         db.add(new_question)
+
+    
+    session = db.query(QuizSession).filter(
+        QuizSession.id == session_id
+    ).first()
+
+    if session:
+        session.total_questions = len(questions)
 
     db.commit()

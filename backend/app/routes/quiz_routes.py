@@ -18,7 +18,7 @@ def create_session(request: QuizRequest, db: Session = Depends(get_db)):
     
     level=request.level.lower()
   
-    new_session = create_quiz_session(db, request.topic, level)
+    new_session = create_quiz_session(db,request.user_id, request.topic, level)
    
     questions = generate_quiz(request.topic, level)
  

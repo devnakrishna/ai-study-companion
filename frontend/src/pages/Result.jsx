@@ -1,168 +1,305 @@
-import { useState } from "react";
-import "../styles/Result.css";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ChevronDown, PlayCircle, BrainCircuit, CheckCircle, Target, BarChart } from 'lucide-react';
+import { getRecommendations } from "../services/quizService"; // adjust path if needed
+import "../styles/Result.css"; // Uses the CSS file provided previously
 
 function Result() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Extract result from router state
   const result = location.state?.result;
 
-  const [openCorrect, setOpenCorrect] = useState(true);
-  const [openWrong, setOpenWrong] = useState(false);
+  // States for Accordions and Recommendations
+  const [openAccordion, setOpenAccordion] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
 
-  if (!result) return <div className="empty">No result found</div>;
-
-  const score = result.scorecard?.percentage || 0;
-
-  const getLevel = () => {
-    if (score >= 80) return "🔥 Advanced Level. Excellent Performance";
-    if (score >= 60) return "👍 Intermediate Level.Good Performance";
-    if (score >= 40) return "⚠️ Beginner Level. Average Performance";
-    return "❌ Needs Improvement";
+  // Toggle Accordion logic (closes the other automatically)
+  const toggleAccordion = (section) => {
+    setOpenAccordion(openAccordion === section ? null : section);
   };
 
-  // FIXED FILTER LOGIC (clean + safe)
-  const correct = result.review.filter((r) => {
+  useEffect(() => {
+    const fetchRecs = async () => {
+      // CHANGED: result.weak_areas -> result.insights.weak_topics
+      if (result?.insights?.weak_topics?.length > 0) {
+        setLoadingRecs(true);
+        try {
+          const res = await getRecommendations(result.insights.weak_topics);
+          
+          // Using res.recommendations || res || [] acts as a safety net 
+          // depending on if your backend returns an object or a direct array
+          setRecommendations(res.recommendations || res || []);
+        } catch (err) {
+          console.error("Recommendation error:", err);
+          setRecommendations([]);
+        } finally {
+          setLoadingRecs(false);
+        }
+      }
+    };
+
+    fetchRecs();
+  }, [result]);
+
+  // Safety check
+  if (!result) return <div className="result-wrapper text-center p-12">No result found</div>;
+
+  // Derived Values
+  
+ const scorecard = result.scorecard || {
+  mcq: { score: 0, total: 0 },
+  descriptive: { score: 0, total: 0 },
+  total_score: 0,
+  total_questions: 0,
+  percentage: 0
+};
+  const insights = result.insights || {}; 
+  const review = result.review || [];
+  
+  const getPerformanceText = (score) => {
+    if (score >= 80) return "Excellent";
+    if (score >= 60) return "Good";
+    if (score >= 40) return "Average";
+    return "Needs Improvement";
+  };
+
+  // Split review array into correct and wrong logic
+  const correctAnswers = review.filter((r) => {
     if (r.type === "mcq") return r.is_correct;
-    return r.score >= 3;
+    return (r.score || 0) >= 3;
   });
 
-  const wrong = result.review.filter((r) => {
+  const wrongAnswers = review.filter((r) => {
     if (r.type === "mcq") return !r.is_correct;
-    return r.score < 3;
+    return (r.score || 0) < 3;
   });
+
+  
 
   return (
-    <div className="result-page">
-
-      {/* TOP SUMMARY */}
-      <div className="result-hero card">
-        <h1>{getLevel()}</h1>
-        <h2 className="score">{score}%</h2>
-
-        <p className="text-muted">
-          {result.scorecard.total_questions} questions attempted
-        </p>
-      </div>
-
-      {/* SUMMARY CARDS */}
-      <div className="summary-grid">
-
-        <div className="card summary-card">
-          <h3>Total</h3>
-          <p>{result.scorecard.total_questions}</p>
+    <div className="result-wrapper">
+      <div className="result-container">
+        
+        {/* Header & Actions */}
+        <div className="header-section">
+          <h1 className="page-title">Study Session Results</h1>
+          <div className="header-actions">
+            <button className="btn btn-secondary" onClick={() => navigate("/performance")}>
+              📊 Previous Performance
+            </button>
+            <button className="btn btn-secondary" onClick={() => navigate("/report")}>
+              Report Card
+            </button>
+            <button className="btn btn-primary" onClick={() => navigate("/home")}>
+              Go to Home
+            </button>
+          </div>
         </div>
 
-        <div className="card summary-card">
-          <h3>MCQ Score</h3>
-          <p>{result.scorecard.mcq.score}/{result.scorecard.mcq.total}</p>
+        {/* 1. Core Metrics Section */}
+        <div className="card metrics-card">
+          <div className="score-section">
+            <p className="label text-muted">Your Score</p>
+            <div className="score-value">{scorecard.percentage}%</div>
+          </div>
+          
+          <div className="stats-section">
+            <div className="stat-box">
+              <Target className="icon icon-primary" />
+              <div>
+                <p className="label text-muted">Skillset Level</p>
+                <p className="stat-value">{insights?.skillset || "Beginner"}</p>
+              </div>
+            </div>
+            <div className="stat-box">
+              <BarChart className="icon icon-success" />
+              <div>
+                <p className="label text-muted">Performance</p>
+                <p className="stat-value">{getPerformanceText(scorecard.percentage)}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="card summary-card">
-          <h3>Descriptive</h3>
-          <p>{result.scorecard.descriptive.score}/{result.scorecard.descriptive.total}</p>
+        {/* 2. The Three Columns */}
+        <div className="columns-grid">
+          <div className="card text-center">
+             <p className="column-value">{scorecard.total_score}/{scorecard.total_questions}</p>
+             <p className="label text-muted">Total Score</p>
+          </div>
+          <div className="card text-center">
+             <p className="column-value">{scorecard.mcq?.score}/{scorecard.mcq?.total}</p>
+             <p className="label text-muted">Multiple Choice Questions</p>
+          </div>
+          <div className="card text-center">
+             <p className="column-value">{scorecard.descriptive.score}/{scorecard.descriptive.total}</p>
+             <p className="label text-muted">Descriptive</p>
+          </div>
         </div>
 
-      </div>
-
-      {/* CORRECT */}
-      <div className="section">
-        <button
-          className="accordion-title correct"
-          onClick={() => setOpenCorrect(!openCorrect)}
-        >
-          ✅ Correct Answers ({correct.length})
-        </button>
-
-        {openCorrect && (
-          <div className="grid">
-            {correct.map((q, i) => (
-              <div className="review-card correct-card" key={i}>
-                <h4>{i + 1}. {q.question}</h4>
-
-                <p><b>Your Answer:</b> {q.your_answer}</p>
-
-                {/* FIXED SCORE DISPLAY */}
-                {q.type === "mcq" ? (
-                  <p className="score-mini">
-                    Score: {q.is_correct ? "1/1" : "0/1"}
-                  </p>
+        {/* 3. AI Insights & Recommendations */}
+        <div className="card insights-card">
+          
+          
+          <div className="insights-header">
+            <BrainCircuit className="icon icon-primary" />
+            <h2>AI Performance Insights</h2>
+          </div>
+          
+          <div className="insights-grid">
+            {/* Strong Topics as Chips */}
+            <div className="insight-box glass">
+              <p className="label text-success mb-2">Strong In</p>
+              <div className="chips-container">
+                {insights?.strong_topics?.length > 0 ? (
+                  insights.strong_topics.map((topic, idx) => (
+                    <span key={idx} className="chip chip-success">{topic}</span>
+                  ))
                 ) : (
-                  <p className="score-mini">
-                    Score: {q.score}/5
-                  </p>
-                )}
-
-                {q.type === "descriptive" && (
-                  <p className="ai-feedback">
-                    🤖 {q.feedback}
-                  </p>
+                  <span className="text-muted text-sm font-medium">Keep practicing!</span>
                 )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
 
-      {/* WRONG */}
-      <div className="section">
-        <button
-          className="accordion-title wrong"
-          onClick={() => setOpenWrong(!openWrong)}
-        >
-          ❌ Needs Review ({wrong.length})
-        </button>
-
-        {openWrong && (
-          <div className="grid">
-            {wrong.map((q, i) => (
-              <div className="review-card wrong-card" key={i}>
-                <h4>{i + 1}. {q.question}</h4>
-
-                <p><b>Your Answer:</b> {q.your_answer}</p>
-
-                {q.type === "mcq" && q.correct_answer && (
-                  <p><b>Correct Answer:</b> {q.correct_answer}</p>
-                )}
-
-                {q.type === "descriptive" && (
-                  <p className="ai-feedback">
-                    🤖 {q.feedback}
-                  </p>
-                )}
-
-                {/* FIXED SCORE DISPLAY */}
-                {q.type === "mcq" ? (
-                  <p className="score-mini">
-                    Score: 0/1
-                  </p>
+            {/* Weak Topics as Chips */}
+            <div className="insight-box glass">
+               <p className="label text-danger mb-2">Needs Focus</p>
+               <div className="chips-container">
+                {insights?.weak_topics?.length > 0 ? (
+                  insights.weak_topics.map((topic, idx) => (
+                    <span key={idx} className="chip chip-danger">{topic}</span>
+                  ))
                 ) : (
-                  <p className="score-mini">
-                    Score: {q.score}/5
-                  </p>
+                  <span className="text-muted text-sm font-medium">None detected! Great job.</span>
                 )}
               </div>
-            ))}
+            </div>
           </div>
-        )}
+
+          {/* YouTube Recommendations as Clickable Chips */}
+          {insights?.weak_topics?.length > 0 && (
+            <div className="resources-section mt-4">
+              <h3 className="mb-3">Recommended YouTube Tutorials:</h3>
+              {loadingRecs ? (
+                <p className="text-muted text-sm">Loading customized video links...</p>
+              ) : (
+                <div className="chips-container">
+                  {recommendations.length > 0 ? (
+                    recommendations.map((vid, idx) => (
+                      <a 
+                        key={idx} 
+                        href={vid.youtube} /* CHANGED from vid.url */
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="chip chip-youtube"
+                      >
+                        <PlayCircle className="icon-sm" />
+                        <span>{vid.topic} Tutorial</span> {/* CHANGED from vid.title */}
+                      </a>
+                    ))
+                  ) : (
+                    <p className="text-muted text-sm">No specific videos found at this time.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          
+        </div>
+
+        {/* 4. Accordions */}
+        <div className="accordions-container">
+          
+          {/* Correct Answers Accordion */}
+          <div className="card accordion">
+            <button className="accordion-btn" onClick={() => toggleAccordion('correct')}>
+              <div className="accordion-title">
+                <CheckCircle className="icon icon-success" />
+                <span>Answers you knew ({correctAnswers.length})</span>
+              </div>
+              <ChevronDown className={`icon chevron ${openAccordion === 'correct' ? 'open' : ''}`} />
+            </button>
+            
+            {openAccordion === 'correct' && (
+              <div className="accordion-content">
+                <ul className="content-list">
+                  {correctAnswers.map((q, i) => (
+                    <li key={i} className="list-item bg-light">
+                      <p className="question">{i + 1}. {q.question}</p>
+                      <p className="answer"><b>Your Answer:</b> {q.your_answer}</p>
+                      
+                      {q.type === "mcq" ? (
+                        <p className="text-success font-medium mt-2">Score: 1/1</p>
+                      ) : (
+                        <div className="mt-2">
+                           <p className="text-success font-medium">Score: {q.score}/5</p>
+                           <p className="concept mt-1">🤖 {q.feedback}</p>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Wrong Answers Accordion */}
+          <div className="card accordion">
+             <button className="accordion-btn" onClick={() => toggleAccordion('wrong')}>
+              <div className="accordion-title">
+                <Target className="icon icon-danger" />
+                <span>Concepts to review ({wrongAnswers.length})</span>
+              </div>
+              <ChevronDown className={`icon chevron ${openAccordion === 'wrong' ? 'open' : ''}`} />
+            </button>
+            
+            {openAccordion === 'wrong' && (
+              <div className="accordion-content">
+                <ul className="content-list">
+                  {wrongAnswers.map((q, i) => {
+                    // Check if the user left it completely blank
+                    const isUnanswered = !q.your_answer || q.your_answer.trim() === "";
+
+                    return (
+                      <li key={i} className="list-item bg-danger-light border-danger">
+                        <p className="question">{i + 1}. {q.question}</p>
+                        
+                        {/* Display "Not answered" if blank */}
+                        <p className="answer mb-1">
+                          <b>Your Answer:</b> {isUnanswered ? (
+                            <span className="text-danger" style={{ fontStyle: 'italic', fontWeight: '500' }}>
+                              Not answered
+                            </span>
+                          ) : (
+                            q.your_answer
+                          )}
+                        </p>
+                        
+                        {q.type === "mcq" && q.correct_answer && (
+                           <p className="text-danger font-medium mb-1"><b>Correct Answer:</b> {q.correct_answer}</p>
+                        )}
+
+                        {q.type === "mcq" ? (
+                          <p className="text-danger font-medium mt-2">Score: 0/1</p>
+                        ) : (
+                          <div className="mt-2">
+                             <p className="text-danger font-medium">Score: {q.score || 0}/5</p>
+                             {q.feedback && <p className="concept mt-1">🤖 {q.feedback}</p>}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}                   
+          </div>
+
+        </div>
       </div>
-
-      {/* ACTION BUTTONS (UNCHANGED UI STRUCTURE) */}
-      <div className="actions">
-        <button className="btn btn-primary" onClick={() => navigate("/home")}>
-          Home
-        </button>
-
-        <button className="btn btn-secondary" onClick={() => navigate("/performance")}>
-          📊 View my Previous Performance
-        </button>
-
-        <button className="btn btn-secondary" onClick={() => navigate("/report")}>
-          Report Card
-        </button>
-      </div>
-
     </div>
   );
 }

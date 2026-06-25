@@ -1,49 +1,78 @@
- const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://localhost:8000";
 
 export const generateQuiz = async (topic, level) => {
   try {
-    
+    const userId = Number(localStorage.getItem("user_id"));
+
     const response = await fetch(`${BASE_URL}/create-session`, {
-      method: "POST", 
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      
-      body: JSON.stringify({ topic: topic, level: level }), 
+      body: JSON.stringify({
+        user_id: userId,
+        topic,
+        level,
+      }),
     });
 
     if (!response.ok) {
-      throw new Error("Failed to generate quiz from backend");
+      const errText = await response.text();
+      throw new Error(`Quiz generation failed: ${errText}`);
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
-    console.error("Error in generateQuiz:", error);
+    console.error("generateQuiz error:", error);
     throw error;
   }
 };
 export const submitQuiz = async (sessionId, answers) => {
-  const response = await fetch(`${BASE_URL}/submit/${sessionId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(answers),
-  });
+  try {
+    const response = await fetch(`${BASE_URL}/submit/${sessionId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(answers),
+    });
 
-  return await response.json();
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Submit failed: ${errText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("submitQuiz error:", error);
+    throw error;
+  }
 };
 export const getTopicHistory = async (topic) => {
-  const response = await fetch(`${BASE_URL}/topic-history/${topic}`);
+  const userId = localStorage.getItem("user_id");
+
+  const response = await fetch(
+    `${BASE_URL}/topic-history/${userId}/${encodeURIComponent(topic)}`
+  );
+
   return await response.json();
 };
 export const evaluateQuiz = async (sessionId) => {
-  const response = await fetch(`${BASE_URL}/evaluate/${sessionId}`, {
-    method: "POST",
-  });
+  try {
+    const response = await fetch(`${BASE_URL}/evaluate/${sessionId}`, {
+      method: "POST",
+    });
 
-  return await response.json();
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Evaluate failed: ${errText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("evaluateQuiz error:", error);
+    throw error;
+  }
 };
 
 export const getRecommendations = async (weakAreas) => {
@@ -59,7 +88,8 @@ export const getRecommendations = async (weakAreas) => {
    return await response.json();
 };
 export const getTopicPerformance = async () => {
-  const response = await fetch(`${BASE_URL}/topic-performance`);
+  const userId = localStorage.getItem("user_id");
+  const response = await fetch(`${BASE_URL}/topic-performance/${userId}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch topic performance");
