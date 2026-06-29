@@ -45,7 +45,7 @@ export default function Topbar() {
 
             <div className="profile-body">
               <p>🏫 {college}</p>
-              <p>📊 Active Learner</p>
+
             </div>
 
           </div>

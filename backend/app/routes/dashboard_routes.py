@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.db.models import User, QuizSession, TopicPerformance
+from app.core.security import get_current_user
 
 router = APIRouter()
 
 
 @router.get("/dashboard/{user_id}")
-def get_dashboard(user_id: int, db: Session = Depends(get_db)):
+def get_dashboard(user_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     user = db.query(User).filter(User.id == user_id).first()
 

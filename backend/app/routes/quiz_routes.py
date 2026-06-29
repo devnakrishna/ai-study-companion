@@ -8,13 +8,14 @@ from app.services.evaluation_service import evaluate_answers
 from app.services.session_service import create_quiz_session, save_questions
 from app.db.database import get_db
 from app.db.models import UserAnswer, Question, QuizSession
+from app.core.security import get_current_user
 
 
 router = APIRouter()
 
 
 @router.post("/create-session")
-def create_session(request: QuizRequest, db: Session = Depends(get_db)):
+def create_session(request: QuizRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     level=request.level.lower()
   
@@ -48,7 +49,7 @@ def create_session(request: QuizRequest, db: Session = Depends(get_db)):
         "questions": formatted
     }
 @router.post("/submit/{session_id}")
-def submit_quiz(session_id: int, submission: list = Body(...), db: Session = Depends(get_db)):
+def submit_quiz(session_id: int, submission: list = Body(...), db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     for ans in submission:
         question_id = ans["question_id"]

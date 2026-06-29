@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { generateQuiz, submitQuiz, evaluateQuiz } from "../services/quizService";
+import ModalAlert from "../components/ModalAlert";
 import "../styles/Test.css";
 
 function Test() {
@@ -17,6 +18,7 @@ function Test() {
 
   const [timeLeft, setTimeLeft] = useState(600);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [alertConfig, setAlertConfig] = useState({ isOpen: false, type: "info", message: "", onClose: null });
 
   // ---------------- FETCH ----------------
   const fetchQuestions = useCallback(async () => {
@@ -91,7 +93,11 @@ function Test() {
           const newCount = prev + 1;
 
           if (newCount === 1) {
-            alert("⚠️ Warning: Next tab switch will auto-submit");
+            setAlertConfig({
+              isOpen: true,
+              type: "error",
+              message: "⚠️ Warning: Next tab switch will auto-submit the quiz!"
+            });
           }
 
           if (newCount >= 2) {
@@ -114,16 +120,21 @@ function Test() {
     window.history.pushState(null, "", window.location.href);
 
     const handleBack = () => {
-      alert("⚠️ You cannot go back during quiz. Submitting...");
-
-      handleSubmit();
+      setAlertConfig({
+        isOpen: true,
+        type: "error",
+        message: "⚠️ You cannot go back during the quiz. Submitting...",
+        onClose: () => {
+          handleSubmit();
+        }
+      });
 
       window.history.pushState(null, "", window.location.href);
     };
 
     window.addEventListener("popstate", handleBack);
 
-    return () => window.removeEventListener("popstate", handleBack);
+    return () => window.addEventListener("popstate", handleBack);
   }, [answers]);
 
   // ---------------- LOADING (PRESERVED) ----------------
@@ -131,12 +142,26 @@ function Test() {
     return (
       <div className="ai-loading-page">
         <div className="ai-loading-card">
-          <div className="ai-dots">
-            <span></span><span></span><span></span>
-          </div>
-          <h2>Generating your assessment</h2>
-          <p className="ai-subtext">Preparing questions for:</p>
+
+          {/* Animated Orb */}
+          <div className="ai-orb"></div>
+
+          {/* Title */}
+          <h2 className="ai-title">Generating your assessment</h2>
+
+          {/* Subtext */}
+          <p className="ai-subtext">Our AI is preparing questions for</p>
+
+          {/* Topic Highlight */}
           <div className="ai-topic">{topic}</div>
+
+          {/* Progress Dots */}
+          <div className="ai-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
         </div>
       </div>
     );
@@ -150,38 +175,38 @@ function Test() {
       {/* HEADER */}
       <div className="test-header">
 
-  <div>
-    <h2>Assessment</h2>
+        <div>
+          <h2>Assessment</h2>
 
-    {/* PROGRESS BAR */}
-    <div className="progress-bar">
-      <div
-        className="progress-fill"
-        style={{
-          width: `${(Object.keys(answers).length / questions.length) * 100}%`
-        }}
-      />
-    </div>
+          {/* PROGRESS BAR */}
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{
+                width: `${(Object.keys(answers).length / questions.length) * 100}%`
+              }}
+            />
+          </div>
 
-  </div>
+        </div>
 
-  <div className="hud-box">
+        <div className="hud-box">
 
-    {/* ANSWERED */}
-    <div className="answered-pill">
-      {Object.keys(answers).length} / {questions.length}
-    </div>
+          {/* ANSWERED */}
+          <div className="answered-pill">
+            {Object.keys(answers).length} / {questions.length}
+          </div>
 
-    {/* BIG TIMER */}
-    <div className="timer-box big-timer">
-      ⏱ {Math.floor(timeLeft / 60)}:
-      {String(timeLeft % 60).padStart(2, "0")}
-    </div>
+          {/* BIG TIMER */}
+          <div className="timer-box big-timer">
+            ⏱ {Math.floor(timeLeft / 60)}:
+            {String(timeLeft % 60).padStart(2, "0")}
+          </div>
 
-  </div>
+        </div>
 
-</div>
-  
+      </div>
+
 
       {/* MAIN */}
       <div className="layout-light">
@@ -246,9 +271,11 @@ function Test() {
                   className={`q-card ${answered ? "done" : ""}`}
                   onClick={() => setCurrentIndex(i)}
                 >
-                  <div className="q-num">Q{i + 1}</div>
-                  <div className="q-status">
-                    {answered ? "✔ Answered" : "Pending"}
+                  <div className="q-header">
+                    <div className="q-num">Q{i + 1}</div>
+                    <div className="q-status">
+                      {answered ? "✔ Answered" : "Pending"}
+                    </div>
                   </div>
                 </div>
               );
@@ -258,6 +285,15 @@ function Test() {
         </div>
 
       </div>
+      <ModalAlert 
+        isOpen={alertConfig.isOpen}
+        type={alertConfig.type}
+        message={alertConfig.message}
+        onClose={() => {
+          if (alertConfig.onClose) alertConfig.onClose();
+          setAlertConfig(prev => ({ ...prev, isOpen: false, onClose: null }));
+        }}
+      />
     </div>
   );
 }

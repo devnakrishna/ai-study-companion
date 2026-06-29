@@ -13,6 +13,24 @@ from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 
 Base = declarative_base()
+# 🟢 COLLEGES
+class College(Base):
+    __tablename__ = "colleges"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(150), unique=True, nullable=False)
+    email = Column(String(100), nullable=True)
+   
+    contact_no = Column(String(20), nullable=True)
+    address = Column(String(255), nullable=True)
+    point_of_contact = Column(String(100), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(String(100), nullable=True)
+    updated_at = Column(DateTime, nullable=True)
+    updated_by = Column(String(100), nullable=True)
+    # relationships
+    specializations = relationship("Specialization", back_populates="college", cascade="all, delete-orphan")
 
 
 # 🟢 USERS
@@ -21,19 +39,42 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    name = Column(String(100), nullable=False)
+    college_id = Column(Integer, ForeignKey("colleges.id"), nullable=False)
+    first_name = Column(String(100))
+    last_name = Column(String(100))
+    contact_no = Column(String(20))
+    address = Column(String(255))
+
+    profile_pic = Column(String(255))
     email = Column(String(100), unique=True, nullable=False)
-    college = Column(String(150))
+   
     password_hash = Column(String(255))
     department = Column(String(100))
+    role = Column(String(50), default="student", nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     created_by = Column(String(100), nullable=True)
 
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     updated_by = Column(String(100), nullable=True)
+    
 
     # relationships
     sessions = relationship("QuizSession", back_populates="user")
+    college = relationship("College")
+
+
+
+
+# 🟢 SPECIALIZATIONS
+class Specialization(Base):
+    __tablename__ = "specializations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    college_id = Column(Integer, ForeignKey("colleges.id"), nullable=False)
+
+    # relationships
+    college = relationship("College", back_populates="specializations")
 
 
 # 🟢 QUIZ SESSION
@@ -135,7 +176,7 @@ class TopicPerformance(Base):
     topic = Column(String(100), nullable=False)
 
     total_attempts = Column(Integer, default=0)
-    total_score = Column(Integer, default=0)
+    total_score = Column(Float, default=0.0)
 
     avg_score = Column(Float, default=0.0)
     last_score = Column(Float, default=0.0)

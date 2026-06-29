@@ -23,6 +23,15 @@ Rules:
 - Do not wrap output in ``` or any text
 - Output must be a valid JSON array only
 
+IMPORTANT:
+- If a question is unanswered (empty string, null, or missing answer):
+  - Assign score = 0
+  - Feedback MUST clearly say the question was not attempted
+  - Still provide the correct answer with explanation
+
+- Always give meaningful feedback, even for wrong or blank answers
+- Never skip any question
+
 Questions:
 {questions}
 """

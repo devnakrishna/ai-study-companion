@@ -167,7 +167,7 @@ form {
 
   border-radius: 10px;
   border: 1px solid rgba(0, 0, 0, 0.08);
-
+  box-sizing:border-box;
   font-size: 14px;
 
   outline: none;
@@ -255,3 +255,42 @@ form {
     height: 60vh;
   }
 }
+
+.login-card.signup-card {
+  width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.select-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  font-size: 14px;
+  outline: none;
+  background: white;
+  transition: all 0.2s ease;
+  color: #1f2937;
+}
+
+.select-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.login-toggle-link {
+  font-size: 14px;
+  color: #4f46e5;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 10px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.login-toggle-link:hover {
+  color: #312e81;
+  text-decoration: underline;
+}

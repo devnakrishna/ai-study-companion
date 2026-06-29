@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -16,13 +17,10 @@ import NewAssessment from "./pages/NewAssessment";
 export default function App() {
   return (
     <Routes>
-
-      
       <Route path="/" element={<Login />} />
 
       {/* ALL APP PAGES INSIDE LAYOUT */}
-      <Route element={<MainLayout />}>
-
+      <Route element={<ProtectedRoute role="student"><MainLayout /></ProtectedRoute>}>
         <Route path="/home" element={<Dashboard />} />
         <Route path="/result" element={<Result />} />
         <Route path="/report" element={<ReportCard />} />
@@ -32,11 +30,9 @@ export default function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/topic/:topic" element={<TopicHistory />} />
         <Route path="/newassessment" element={<NewAssessment />} />
-        
-
       </Route>
-      <Route path="/admin" element={<Admin />} />
 
+      <Route path="/admin" element={<ProtectedRoute role="admin"><Admin /></ProtectedRoute>} />
     </Routes>
   );
 }

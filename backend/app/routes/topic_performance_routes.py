@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.db.models import TopicPerformance, QuizSession
+from app.core.security import get_current_user
 
 router = APIRouter()
 
 
 @router.get("/topic-performance/{user_id}")
-def get_topic_performance(user_id: int, db: Session = Depends(get_db)):
+def get_topic_performance(user_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
 
     records = db.query(TopicPerformance).filter(
@@ -26,7 +27,7 @@ def get_topic_performance(user_id: int, db: Session = Depends(get_db)):
     ]
 
 @router.get("/topic-history/{user_id}/{topic}")
-def get_topic_history(user_id: int, topic: str, db: Session = Depends(get_db)):
+def get_topic_history(user_id: int, topic: str, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     sessions = db.query(QuizSession).filter(
         QuizSession.user_id == user_id,   # 🔥 CRITICAL FIX

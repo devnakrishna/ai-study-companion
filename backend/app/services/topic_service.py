@@ -8,6 +8,8 @@ def update_topic_performance(db, user_id, topic, normalized_score, session_id=No
     if normalized_score is None:
         return
 
+    topic_normalized = topic.strip().title()
+
     if session_id:
         session = db.query(QuizSession).filter(
             QuizSession.id == session_id
@@ -19,7 +21,7 @@ def update_topic_performance(db, user_id, topic, normalized_score, session_id=No
 
     record = db.query(TopicPerformance).filter(
         TopicPerformance.user_id == user_id,
-        TopicPerformance.topic == topic
+        TopicPerformance.topic == topic_normalized
     ).first()
 
     if record:
@@ -33,7 +35,7 @@ def update_topic_performance(db, user_id, topic, normalized_score, session_id=No
     else:
         record = TopicPerformance(
             user_id=user_id,
-            topic=topic,
+            topic=topic_normalized,
             total_attempts=1,
             total_score=normalized_score,
             avg_score=normalized_score,

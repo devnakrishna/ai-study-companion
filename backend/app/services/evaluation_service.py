@@ -5,11 +5,18 @@ from app.services.topic_service import update_topic_performance
 
 
 def evaluate_answers(session_id, db):
-    answers = db.query(UserAnswer).filter(
-        UserAnswer.session_id == session_id
+    session = db.query(QuizSession).filter(
+        QuizSession.id == session_id
+    ).first()
+    if session and session.percentage is not None:
+        return get_session_results(session_id, db)
+
+    # Retrieve all questions for this session
+    questions = db.query(Question).filter(
+        Question.session_id == session_id
     ).all()
 
-    if not answers:
+    if not questions:
         return {
             "scorecard": {
                 "total_score": 0,
@@ -24,13 +31,18 @@ def evaluate_answers(session_id, db):
                 "weak_topics": [],
                 "skillset": "Beginner"
             }
-            
-    }
+        }
+
+    answers = db.query(UserAnswer).filter(
+        UserAnswer.session_id == session_id
+    ).all()
+    answer_map = {ans.question_id: ans for ans in answers}
 
     mcq_score = 0
     total_mcq = 0
     desc_score = 0
     total_desc = 0
+    correct_desc_count = 0
 
     review_data = []
     strong_areas = []
@@ -40,16 +52,25 @@ def evaluate_answers(session_id, db):
     desc_inputs = []
     desc_mapping = []
 
-    for ans in answers:
-        question = db.query(Question).filter(
-            Question.id == ans.question_id
-        ).first()
+    for question in questions:
+        ans = answer_map.get(question.id)
 
-        if not question:
-            continue
+        # If UserAnswer does not exist, it was unattempted. Create a default record.
+        if not ans:
+            is_correct = False if question.question_type.lower() in ["multiselect", "mcq", "multiplechoice"] else None
+            ans = UserAnswer(
+                session_id=session_id,
+                question_id=question.id,
+                user_answer="",
+                is_correct=is_correct,
+                marks_awarded=0,
+                created_by="system"
+            )
+            db.add(ans)
+            answer_map[question.id] = ans
 
         # MCQ
-        if question.question_type.lower() in ["multiselect", "mcq"]:
+        if question.question_type.lower() in ["multiselect", "mcq", "multiplechoice"]:
             total_mcq += 1
 
             if ans.is_correct:
@@ -68,54 +89,66 @@ def evaluate_answers(session_id, db):
 
         # Descriptive
         elif question.question_type.lower() == "long answer":
-            desc_inputs.append({
-                "question": question.question_text,
-                "correct_answer": question.correct_answer,
-                "user_answer": ans.user_answer,
-                "topic": question.topic
+            # If the user left it blank/unattempted, evaluate immediately with 0 score
+            if not ans.user_answer or not ans.user_answer.strip():
+                total_desc += 1
+                ans.marks_awarded = 0
+                ans.ai_feedback = question.correct_answer or "Not attempted"
+                review_data.append({
+                    "type": "descriptive",
+                    "question": question.question_text,
+                    "your_answer": "",
+                    "score": 0,
+                    "feedback": question.correct_answer or "Not attempted"
+                })
+                weak_areas.append(question.topic)
+            else:
+                desc_inputs.append({
+                    "question": question.question_text,
+                    "correct_answer": question.correct_answer,
+                    "user_answer": ans.user_answer,
+                    "topic": question.topic
+                })
+                desc_mapping.append(ans)
+
+    if desc_inputs:
+        desc_results = evaluate_descriptive_batch(desc_inputs)
+
+        for res, ans_obj, input_obj in zip(desc_results, desc_mapping, desc_inputs):
+            score = max(0, min(res.get("score", 0), 5))
+            fb = res.get("feedback", "")
+
+            total_desc += 1
+            desc_score += score / 5
+
+            ans_obj.marks_awarded = score
+            ans_obj.ai_feedback = fb
+
+            review_data.append({
+                "type": "descriptive",
+                "question": input_obj["question"],
+                "your_answer": input_obj["user_answer"],
+                "score": score,
+                "feedback": fb
             })
-            desc_mapping.append(ans)
 
-   
-    desc_results = evaluate_descriptive_batch(desc_inputs)
-
-    for res, ans_obj, input_obj in zip(desc_results, desc_mapping, desc_inputs):
-
-        score = max(0, min(res.get("score", 0), 5))
-        fb = res.get("feedback", "")
-
-        total_desc += 1
-        desc_score += score / 5
-
-        ans_obj.marks_awarded = score
-        ans_obj.ai_feedback = fb
-
-        review_data.append({
-            "type": "descriptive",
-            "question": input_obj["question"],
-            "your_answer": input_obj["user_answer"],
-            "score": score,
-            "feedback": fb
-        })
-
-        if score >= 3:
-            strong_areas.append(input_obj["topic"])
-        else:
-            weak_areas.append(input_obj["topic"])
-      
+            if score >= 3:
+                strong_areas.append(input_obj["topic"])
+                correct_desc_count += 1
+            else:
+                weak_areas.append(input_obj["topic"])
 
     # FINAL CALCULATIONS
     strong_areas = list(set(strong_areas))
     weak_areas = list(set(weak_areas))
 
     total_questions = total_mcq + total_desc
-    total_score = mcq_score + desc_score
+    total_score = mcq_score + correct_desc_count
     percentage = (total_score / total_questions) * 100 if total_questions else 0
 
     session = db.query(QuizSession).filter(
         QuizSession.id == session_id
     ).first()
-    
 
     if session:
         session.score = total_score
@@ -134,30 +167,123 @@ def evaluate_answers(session_id, db):
     db.commit()
 
     return {
-    "scorecard": {
-        "total_score": round(total_score, 2),
-        "total_questions": total_questions,
-        "percentage": round(percentage, 2),
-        "mcq": {
-            "score": mcq_score,
-            "total": total_mcq
+        "scorecard": {
+            "total_score": total_score,
+            "total_questions": total_questions,
+            "percentage": round(percentage, 2),
+            "mcq": {
+                "score": mcq_score,
+                "total": total_mcq
+            },
+            "descriptive": {
+                "score": correct_desc_count,
+                "total": total_desc
+            }
         },
-        "descriptive": {
-            "score": round(desc_score, 2),
-            "total": total_desc
+        "review": review_data,
+        "insights": {
+            "strong_topics": strong_areas,
+            "weak_topics": weak_areas,
+            "skillset": (
+                "Advanced" if percentage >= 75 else
+                "Intermediate" if percentage >= 50 else
+                "Beginner"
+            )
         }
-    },
-    "review": review_data,
-
-    
-    "insights": {
-        "strong_topics": strong_areas,
-        "weak_topics": weak_areas,
-        "skillset": (
-            "Advanced" if percentage >= 75 else
-            "Intermediate" if percentage >= 50 else
-            "Beginner"
-        )
     }
-}
+
+
+def get_session_results(session_id: int, db):
+    session = db.query(QuizSession).filter(QuizSession.id == session_id).first()
+    if not session:
+        return None
+
+    questions = db.query(Question).filter(Question.session_id == session_id).all()
+    answers = db.query(UserAnswer).filter(UserAnswer.session_id == session_id).all()
+    answer_map = {ans.question_id: ans for ans in answers}
+
+    mcq_score = 0
+    total_mcq = 0
+    desc_score = 0
+    total_desc = 0
+    correct_desc_count = 0
+
+    review_data = []
+    strong_areas = []
+    weak_areas = []
+
+    for question in questions:
+        ans = answer_map.get(question.id)
+
+        # MCQ
+        if question.question_type.lower() in ["multiselect", "mcq", "multiplechoice"]:
+            total_mcq += 1
+            is_correct = ans.is_correct if ans else False
+            if is_correct:
+                mcq_score += 1
+                strong_areas.append(question.topic)
+            else:
+                weak_areas.append(question.topic)
+
+            review_data.append({
+                "type": "mcq",
+                "question": question.question_text,
+                "your_answer": ans.user_answer if ans else "",
+                "correct_answer": question.correct_answer,
+                "is_correct": is_correct
+            })
+
+        # Descriptive
+        elif question.question_type.lower() == "long answer":
+            total_desc += 1
+            score = ans.marks_awarded if ans else 0
+            desc_score += score / 5
+            fb = (ans.ai_feedback if (ans and ans.ai_feedback and ans.ai_feedback != "Not attempted") else question.correct_answer) or "Not attempted"
+
+            review_data.append({
+                "type": "descriptive",
+                "question": question.question_text,
+                "your_answer": ans.user_answer if ans else "",
+                "score": score,
+                "feedback": fb
+            })
+
+            if score >= 3:
+                strong_areas.append(question.topic)
+                correct_desc_count += 1
+            else:
+                weak_areas.append(question.topic)
+
+    strong_areas = list(set(strong_areas))
+    weak_areas = list(set(weak_areas))
+
+    total_questions = total_mcq + total_desc
+    total_score = mcq_score + correct_desc_count
+    percentage = session.percentage if session.percentage is not None else ((total_score / total_questions) * 100 if total_questions else 0)
+
+    return {
+        "scorecard": {
+            "total_score": total_score,
+            "total_questions": total_questions,
+            "percentage": round(percentage, 2),
+            "mcq": {
+                "score": mcq_score,
+                "total": total_mcq
+            },
+            "descriptive": {
+                "score": correct_desc_count,
+                "total": total_desc
+            }
+        },
+        "review": review_data,
+        "insights": {
+            "strong_topics": strong_areas,
+            "weak_topics": weak_areas,
+            "skillset": (
+                "Advanced" if percentage >= 75 else
+                "Intermediate" if percentage >= 50 else
+                "Beginner"
+            )
+        }
+    }
       

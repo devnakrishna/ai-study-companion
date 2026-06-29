@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { 
+  Home, 
+  FlaskConical, 
+  BookOpen, 
+  BarChart3, 
+  User, 
+  LogOut 
+} from "lucide-react";
 export default function Sidebar({collapsed, setCollapsed}) {
 
   const navigate = useNavigate();
@@ -30,28 +37,32 @@ const handleLogout = () => {
       <div className="nav-group">
 
         <button onClick={() => navigate("/home")}>
-          🏠 {!collapsed && "Home"}
+          <Home className="sidebar-icon" />
+          {!collapsed && "Home"}
         </button>
 
         <button onClick={() => navigate("/newassessment")}>
-          🧪 {!collapsed && "New Assessment"}
-        </button>
+    <FlaskConical className="sidebar-icon" />
+    {!collapsed && "New Assessment"}
+  </button>
 
-        <button onClick={() => navigate("/history")}>
-          📚 {!collapsed && "View My Assessments"}
-        </button>
+  <button onClick={() => navigate("/performance")}>
+    <BarChart3 className="sidebar-icon" />
+    {!collapsed && "View My Assessments"}
+  </button>
 
-        <button onClick={() => navigate("/performance")}>
-          📊 {!collapsed && "Performance"}
-        </button>
+  <button onClick={() => navigate("/profile")}>
+    <User className="sidebar-icon" />
+    {!collapsed && "Profile"}
+  </button>
 
-        <button onClick={() => navigate("/profile")}>
-          👤 {!collapsed && "Profile"}
-        </button>
+      </div>
+
+      <div className="sidebar-bottom">
         <button className="sidebar-item logout" onClick={handleLogout}>
-  ↪️ {!collapsed && "Logout"}
-</button>
-
+          <LogOut className="sidebar-icon" />
+          {!collapsed && "Logout"}
+        </button>
       </div>
 
     </div>
