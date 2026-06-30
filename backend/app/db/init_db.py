@@ -1,7 +1,7 @@
 # pyrefly: ignore [missing-import]
 from sqlalchemy import text
 from app.db.database import engine, SessionLocal
-from app.db.models import Base, User, College, Specialization
+from app.db.models import Base, User, College, Specialization, TopicPerformance
 
 def init_db():
     # Dynamically alter table to add role column to users table if not present
@@ -40,7 +40,7 @@ def init_db():
                 print(f"Could not add {col_name} to colleges (it might already exist):", e)
 
     Base.metadata.create_all(bind=engine)
-    print("Database tables created successfully")
+    
 
     # Seed admin user if it does not exist
     db = SessionLocal()
@@ -98,7 +98,7 @@ def init_db():
                 db.add(spec1)
                 db.add(spec2)
         db.commit()
-        print("Ensured all colleges have CSE/ECE specializations seeded.")
+        
 
         # Merge duplicate TopicPerformance records case-insensitively
         performances = db.query(TopicPerformance).all()

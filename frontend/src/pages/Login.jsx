@@ -10,10 +10,11 @@ function Login() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [collegeId, setCollegeId] = useState("");
-  const [department, setDepartment] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [selectedDepartment,setSelectedDepartment]=useState("");
   const [contactNo, setContactNo] = useState("");
   const [address, setAddress] = useState("");
-
+  
   const [collegesList, setCollegesList] = useState([]);
   const [successMsg, setSuccessMsg] = useState("");
   const [error, setError] = useState("");
@@ -30,7 +31,17 @@ function Login() {
       })
       .catch((err) => console.error("Error fetching colleges:", err));
   }, []);
+useEffect(() => {
+  if (!collegeId) return;
 
+  fetch(`http://localhost:8000/colleges/${collegeId}/departments`)
+    .then(res => res.json())
+    .then(data => {
+      setDepartments(data);
+      setSelectedDepartment(""); 
+    })
+    .catch(console.error);
+}, [collegeId]);
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -75,6 +86,11 @@ function Login() {
       localStorage.setItem("address", data.address || "");
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("role", data.role);
+      if (data.profile_pic) {
+        localStorage.setItem("profile_pic", data.profile_pic);
+      } else {
+        localStorage.removeItem("profile_pic");
+      }
 
       if (data.role === "admin") {
         navigate("/admin");
@@ -93,7 +109,7 @@ function Login() {
     setError("");
     setSuccessMsg("");
 
-    if (!email || !password || !firstName || !lastName || !collegeId || !department || !contactNo || !address) {
+    if (!email || !password || !firstName || !lastName || !collegeId || !selectedDepartment || !contactNo || !address) {
       setError("Please fill in all required fields");
       return;
     }
@@ -112,7 +128,7 @@ function Login() {
           email: email.trim(),
           password: password,
           college_id: Number(collegeId),
-          department: department.trim(),
+          department: selectedDepartment.trim(),
           contact_no: contactNo.trim() || null,
           address: address.trim() || null
         })
@@ -127,8 +143,10 @@ function Login() {
       }
 
       setSuccessMsg("Registration successful! You can now log in.");
-      setIsSignup(false);
+     
       setPassword("");
+      setEmail("");
+       setIsSignup(false);
     } catch (err) {
       setError("Server error");
     }
@@ -212,14 +230,19 @@ function Login() {
                   ))}
                 </select>
 
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Department (e.g. CSE)"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  required
-                />
+                <select disabled={!collegeId}
+  className="select-input"
+  value={selectedDepartment}
+  onChange={(e) => setSelectedDepartment(e.target.value)}
+  required
+>
+  <option value="">Select Department</option>
+  {departments.map((d, index) => (
+    <option key={index} value={d.name}>
+      {d.name}
+    </option>
+  ))}
+</select>
 
                 <input
                   type="text"
@@ -249,7 +272,7 @@ function Login() {
               disabled={loading}
               style={{ marginTop: "10px" }}
             >
-              {loading ? "Connecting..." : isSignup ? "Sign Up" : "Continue"}
+              {loading ? "Connecting..." : isSignup ? "Sign Up" : "Login"}
             </button>
           </form>
 
@@ -257,6 +280,15 @@ function Login() {
             className="login-toggle-link"
             onClick={() => {
               setIsSignup(!isSignup);
+              setEmail("");
+              setPassword("");
+              setFirstName("");
+              setLastName("");
+              setCollegeId("");
+              setDepartments([]);        
+              setSelectedDepartment(""); 
+              setContactNo("");
+              setAddress("");
               setError("");
               setSuccessMsg("");
             }}
@@ -269,4 +301,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Login;

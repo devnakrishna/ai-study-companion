@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTopicPerformance, getTopicHistory, getSessionHistory } from "../services/quizService";
 import ModalAlert from "../components/ModalAlert";
+import { BarChart3 } from "lucide-react";
 import "../styles/Performance.css";
 
 function Performance() {
@@ -63,8 +64,9 @@ function Performance() {
   return (
     <div className="performance-page">
 
-      <h1>📈 View My Assessments</h1>
-
+      <h1 className="perf-title">
+  <BarChart3 size={22} /> View My Assessments
+</h1>
       <div className="perf-grid">
 
         {data.map((item, i) => {
@@ -139,9 +141,7 @@ function Performance() {
 
       </div>
 
-      <button className="back-btn" onClick={() => navigate("/home")}>
-        ⬅ Back to Home
-      </button>
+      
 
       <ModalAlert 
         isOpen={alertConfig.isOpen}

@@ -1,21 +1,22 @@
 
 /* PAGE CENTERING */
 .assessment-page {
-  height: 100vh;
+  min-height: 100%;
+  padding: 20px; 
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background: #f8fafc;
+  background: #f1f5f9; 
 }
 
 /* MAIN CARD */
 .assessment-card {
-  width: 420px;
+  width: 520px;
   background: white;
+  min-height: 320px;
 
-  padding: 30px;
-  border-radius: 16px;
+  padding: 14px;
+  border-radius: 14px;
 
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 
@@ -23,12 +24,15 @@
 
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
+  justify-content: center;
 }
 
 /* TITLE */
 .assessment-title {
-  font-size: 24px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
   margin: 0;
 }
 
@@ -42,47 +46,56 @@
 .assessment-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 /* INPUTS */
 .input {
-  padding: 12px;
-  border-radius: 10px;
-
-  border: 1px solid #e5e7eb;
-  outline: none;
-
+  padding: 14px 12px; /* tighter */
+  border-radius: 8px;
   font-size: 14px;
-  transition: 0.2s;
+
+  border: 1px solid #e2e8f0;
+  background: #f9fafb;
+
+  transition: all 0.2s ease;
 }
 
 .input:focus {
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+  background: white;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.08);
 }
 
 /* START BUTTON */
 .start-btn {
-  padding: 12px;
-  border-radius: 10px;
+  padding: 14px;
+  border-radius: 8px;
 
-  border: none;
-  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
 
   background: #cbd5e1;
   color: white;
 
-  font-weight: 600;
-  transition: 0.2s;
+  transition: all 0.2s ease;
 }
 
 .start-btn.active {
   background: linear-gradient(135deg, #6366f1, #4f46e5);
+  box-shadow: 0 4px 14px rgba(99,102,241,0.25);
+}
+
+.start-btn.active:hover {
+  transform: translateY(-1px) scale(1.01);
 }
 
 .start-btn:hover {
   transform: translateY(-2px);
+}
+.assessment-card:hover {
+  transform: translateY(-2px);
+  transition: 0.2s ease;
 }
 
 /* INFO BADGE */

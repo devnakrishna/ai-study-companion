@@ -65,7 +65,7 @@ def generate_report(user_id: int, db: Session):
         avg_time_str = f"{int(total_duration_secs // 60)}m {int(total_duration_secs % 60)}s" if total_duration_secs > 0 else "3m 30s"
         
         if avg_pct >= 85:
-            areas_of_improvement = "Concepts are highly clear. Focus on speed and mock test accuracy."
+            areas_of_improvement = "Concepts are highly clear. Focus on speed and mock assessment accuracy."
         elif avg_pct >= 70:
             areas_of_improvement = "Solid comprehension. Review weak areas from quizzes and focus on edge-case scenarios."
         elif avg_pct >= 50:
@@ -107,6 +107,7 @@ def generate_report(user_id: int, db: Session):
         "email": user.email if user else "",
         "college": user.college.name if (user and user.college) else "",
         "department": user.department if user else "",
+        "profile_pic": user.profile_pic if user else None,
 
         # ---------------- PERFORMANCE ----------------
         "total_quizzes": total_quizzes,

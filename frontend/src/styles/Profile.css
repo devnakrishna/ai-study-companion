@@ -42,6 +42,28 @@
   font-weight: 800;
   box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.profile-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.remove-photo-btn {
+  margin-top: 8px;
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.remove-photo-btn:hover {
+  background: #d9363e;
 }
 .upload-btn {
   margin-top: 10px;

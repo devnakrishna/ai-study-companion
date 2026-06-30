@@ -185,6 +185,14 @@
   align-items: center;
   justify-content: center;
   border: 2px solid #cbd5e1;
+  overflow: hidden;
+}
+
+.report-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .student-avatar-placeholder svg {

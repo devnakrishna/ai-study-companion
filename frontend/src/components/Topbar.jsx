@@ -23,7 +23,11 @@ export default function Topbar() {
 
         <div className="profile-pill">
           <div className="avatar">
-            {name?.charAt(0).toUpperCase()}
+            {localStorage.getItem("profile_pic") ? (
+              <img src={`http://localhost:8000/${localStorage.getItem("profile_pic")}`} alt="avatar" />
+            ) : (
+              name?.charAt(0).toUpperCase()
+            )}
           </div>
           <span>{name}</span>
         </div>
@@ -34,7 +38,11 @@ export default function Topbar() {
 
             <div className="profile-header">
               <div className="avatar big">
-                {name?.charAt(0).toUpperCase()}
+                {localStorage.getItem("profile_pic") ? (
+                  <img src={`http://localhost:8000/${localStorage.getItem("profile_pic")}`} alt="avatar" />
+                ) : (
+                  name?.charAt(0).toUpperCase()
+                )}
               </div>
 
               <div>

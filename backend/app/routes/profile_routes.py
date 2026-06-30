@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-
+import re
 from app.db.database import get_db
-from app.db.models import User, College
+from app.db.models import User, College, Specialization
 from app.core.security import create_access_token, get_current_user
 
 router = APIRouter()
@@ -33,7 +33,8 @@ def get_profile(
         "department": current_user.department,
         "contact_no": current_user.contact_no,
         "address": current_user.address,
-        "role": current_user.role
+        "role": current_user.role,
+        "profile_pic": current_user.profile_pic
     }
 
 
@@ -43,22 +44,58 @@ def update_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    email = profile_data.email.strip().lower()
+    contact = profile_data.contact_no.strip()
+ # ---------------- EMAIL FORMAT ----------------
+    email_regex = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    if not re.match(email_regex, email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+
+    # ---------------- EMAIL UNIQUE ----------------
+    if email != current_user.email:
+        existing = db.query(User).filter(User.email == email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already in use")
+
+    # ---------------- CONTACT VALIDATION ----------------
+    if not contact.isdigit():
+        raise HTTPException(status_code=400, detail="Contact must contain only digits")
+
+    if len(contact) != 10:
+        raise HTTPException(status_code=400, detail="Invalid contact number")
     # Email uniqueness
     if profile_data.email.strip().lower() != current_user.email:
         existing = db.query(User).filter(User.email == profile_data.email.strip().lower()).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already in use")
 
-    # ✅ FIX: check college by ID
-    college = db.query(College).filter(College.id == profile_data.college_id).first()
-    if not college:
-        raise HTTPException(status_code=400, detail="Invalid college selected")
+        # ---------------- COLLEGE VALIDATION ----------------
+    if current_user.role == "student":
+        # ❌ block change
+        if profile_data.college_id != current_user.college_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Students are not allowed to change college"
+            )
+        college = db.query(College).filter(College.id == current_user.college_id).first()
+    else:
+        # admins can change
+        college = db.query(College).filter(College.id == profile_data.college_id).first()
+        if not college:
+            raise HTTPException(status_code=400, detail="Invalid college selected")
+        
+        if college.email:
+            domain = college.email.split("@")[1].lower()
+        if not email.endswith(domain):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Email must end with '{domain}'"
+            )
 
     # ✅ Update user
     current_user.first_name = profile_data.first_name.strip()
     current_user.last_name = profile_data.last_name.strip()
     current_user.email = profile_data.email.strip().lower()
-    current_user.college_id = profile_data.college_id.strip()
     current_user.department = profile_data.department.strip()
     current_user.contact_no = profile_data.contact_no.strip()
     current_user.address = profile_data.address.strip()
@@ -83,7 +120,8 @@ def update_profile(
         "department": current_user.department,
         "contact_no": current_user.contact_no,
         "address": current_user.address,
-        "role": current_user.role
+        "role": current_user.role,
+        "profile_pic": current_user.profile_pic
     }
 class ChangePassword(BaseModel):
     current_password: str
@@ -118,3 +156,10 @@ def get_all_colleges(db: Session = Depends(get_db)):
         }
         for c in colleges
     ]
+@router.get("/colleges/{college_id}/departments")
+def get_departments(college_id: int, db: Session = Depends(get_db)):
+    specs = db.query(Specialization).filter(
+        Specialization.college_id == college_id
+    ).all()
+
+    return [{"name": s.name} for s in specs]

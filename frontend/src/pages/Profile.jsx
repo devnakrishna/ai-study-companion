@@ -56,6 +56,11 @@ export default function Profile() {
         localStorage.setItem("contact_no", data.contact_no || "");
         localStorage.setItem("address", data.address || "");
         localStorage.setItem("name", `${data.first_name || ""} ${data.last_name || ""}`.trim() || data.email);
+        if (data.profile_pic) {
+          localStorage.setItem("profile_pic", data.profile_pic);
+        } else {
+          localStorage.removeItem("profile_pic");
+        }
       })
       .catch((err) => {
         console.error("Error fetching profile details:", err);
@@ -153,7 +158,7 @@ export default function Profile() {
         first_name: firstName,
         last_name: lastName,
         email,
-        college_id: collegeId,
+        
         department,
         contact_no: contact,
         address
@@ -180,6 +185,11 @@ export default function Profile() {
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("role", data.role);
       localStorage.setItem("name", `${data.first_name || ""} ${data.last_name || ""}`.trim() || data.email);
+      if (data.profile_pic) {
+        localStorage.setItem("profile_pic", data.profile_pic);
+      } else {
+        localStorage.removeItem("profile_pic");
+      }
 
       setSuccess("Profile updated successfully!");
 
@@ -210,7 +220,7 @@ export default function Profile() {
             <div className="profile-avatar-large">
               {localStorage.getItem("profile_pic") ? (
                 <img
-                  src={`http://localhost:8000/uploads/${localStorage.getItem("profile_pic")}`}
+                  src={`http://localhost:8000/${localStorage.getItem("profile_pic")}`}
                   alt="profile"
                   className="profile-img"
                 />
@@ -227,6 +237,27 @@ export default function Profile() {
                 hidden
               />
             </label>
+            {localStorage.getItem("profile_pic") && (
+            <button
+  className="remove-photo-btn"
+  onClick={async () => {
+    try {
+      await axios.delete("http://localhost:8000/users/remove-profile-pic", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      localStorage.removeItem("profile_pic");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
+  }}
+>
+  Remove Photo
+</button>
+            )}
           </div>
           <div className="profile-title-group">
             <h2>Manage Profile</h2>
@@ -281,21 +312,13 @@ export default function Profile() {
             </div>
 
             <div className="form-group-custom">
-              <label>College</label>
-              <select
-                className="input-custom"
-                value={collegeId}
-                onChange={(e) => setCollegeId(Number(e.target.value))}
-                required
-              >
-                <option value="">Select College</option>
-                {colleges.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+  <label>College</label>
+  <input
+    className="input-custom"
+    value={localStorage.getItem("college") || ""}
+    disabled
+  />
+</div>
 
             <div className="form-group-custom">
               <label>Department</label>

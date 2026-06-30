@@ -24,7 +24,7 @@ function Home() {
       .then((res) => {
         const data = res.data;
 
-        // Threshold of 75% for strong topics
+        
         const strong = data.filter(t => t.avg_score >= 60);
         const weak = data.filter(t => t.avg_score < 60);
 
@@ -46,7 +46,15 @@ function Home() {
       <div className="profile-hero-card">
         <div className="profile-hero-left">
           <div className="profile-hero-avatar">
-            {name ? name.charAt(0).toUpperCase() : <User />}
+            {localStorage.getItem("profile_pic") ? (
+              <img
+                src={`http://localhost:8000/${localStorage.getItem("profile_pic")}`}
+                alt="profile"
+                className="profile-hero-avatar-img"
+              />
+            ) : (
+              name ? name.charAt(0).toUpperCase() : <User />
+            )}
           </div>
           <div className="profile-hero-details">
             <h1 className="profile-hero-name">Welcome back, {name}! 👋</h1>

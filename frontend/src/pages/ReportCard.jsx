@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, Fragment } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -17,10 +17,9 @@ export default function ReportCard() {
     total_quizzes: 0,
     average_score: 0,
     division: "N/A",
-    topics: []
+    topics: [],
+    profile_pic: null
   });
-
-  const [expandedRows, setExpandedRows] = useState({});
 
   // ---------------- FETCH ----------------
   useEffect(() => {
@@ -41,16 +40,9 @@ export default function ReportCard() {
     department,
     total_quizzes,
     average_score,
-    division,
-    topics = []
+    topics = [],
+    profile_pic
   } = data;
-
-  const toggleRow = (subject) => {
-    setExpandedRows(prev => ({
-      ...prev,
-      [subject]: !prev[subject]
-    }));
-  };
 
   // ---------------- PDF EXPORT ----------------
   const downloadPDF = async () => {
@@ -123,19 +115,17 @@ export default function ReportCard() {
 
           <div className="student-avatar-container">
             <div className="student-avatar-placeholder">
-              {localStorage.getItem("profile_pic") ? (
+              {profile_pic ? (
                 <img
-                  src={`http://localhost:8000/${localStorage.getItem("profile_pic")}`}
+                  src={`http://localhost:8000/${profile_pic}`}
                   className="report-avatar-img"
+                  alt="Student profile"
                 />
               ) : (
-                <div className="student-avatar-placeholder">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                  </svg>
-                </div>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
               )}
-
             </div>
             <span className="avatar-label">Official Photo</span>
           </div>
@@ -156,71 +146,23 @@ export default function ReportCard() {
           <tbody>
             {topics.length > 0 ? (
               topics.map((t, i) => {
-                const isExpanded = !!expandedRows[t.subject];
                 return (
-                  <Fragment key={i}>
-                    <tr className={`row-hoverable ${t.average_score < 60
-                      ? "weak-row"
-                      : t.average_score >= 60
-                        ? "strong-row"
-                        : ""
-                      }`} onClick={() => toggleRow(t.subject)}>
-                      <td>
-                        <span className="expand-indicator" onClick={(e) => {
-                          e.stopPropagation();
-                          toggleRow(t.subject);
-                        }}
-                        >
-                          {isExpanded ? "▼" : "▶"}
-                        </span>
-                        {t.subject}
-                      </td>
-                      <td className="text-center">{t.attempts}</td>
-                      <td className="text-center">{t.average_score}%</td>
-                      <td>{t.remarks}</td>
-                    </tr>
-                    {isExpanded && (
-                      <tr className="expanded-details-row">
-                        <td colSpan="4">
-                          <div className="expanded-details-container">
-                            <div className="details-grid">
-                              <div className="details-item">
-                                <strong>Best Score Achieved</strong>
-                                <span>{t.best_score}%</span>
-                              </div>
-                              <div className="details-item">
-                                <strong>Total Questions Attempted</strong>
-                                <span>{t.total_questions_attempted} questions</span>
-                              </div>
-                              <div className="details-item">
-                                <strong>Performance Trend</strong>
-                                <span>
-                                  {t.attempts > 1
-                                    ? t.average_score >= t.best_score * 0.8
-                                      ? "Improving 📈"
-                                      : "Needs Consistency ⚠️"
-                                    : "Not enough data"}
-                                </span>
-                              </div>
-                              <div className="details-item">
-                                <strong>Average Time Spent</strong>
-                                <span>{t.average_time_spent}</span>
-                              </div>
-                            </div>
-                            <div className="improvement-recommendation">
-                              <strong>Areas of Improvement & Study Plan</strong>
-                              <p>{t.areas_of_improvement}</p>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
+                  <tr key={i} className={t.average_score < 60
+                    ? "weak-row"
+                    : t.average_score >= 60
+                      ? "strong-row"
+                      : ""
+                    }>
+                    <td>{t.subject}</td>
+                    <td className="text-center">{t.attempts}</td>
+                    <td className="text-center">{t.average_score}%</td>
+                    <td>{t.remarks}</td>
+                  </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan="5" className="no-records">No academic records found.</td>
+                <td colSpan="4" className="no-records">No academic records found.</td>
               </tr>
             )}
           </tbody>
@@ -252,7 +194,7 @@ export default function ReportCard() {
           <p>
             <strong>Strong Areas:</strong>{" "}
             {topics
-              .filter(t => t.average_score > 60)
+              .filter(t => t.average_score >= 60)
               .map(t => t.subject)
               .join(", ") || "None"}
           </p>
@@ -260,7 +202,7 @@ export default function ReportCard() {
           <p>
             <strong>Weak Areas:</strong>{" "}
             {topics
-              .filter(t => t.average_score <= 60)
+              .filter(t => t.average_score < 60)
               .map(t => t.subject)
               .join(", ") || "None"}
           </p>

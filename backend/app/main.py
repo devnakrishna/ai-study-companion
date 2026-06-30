@@ -11,6 +11,7 @@ from app.routes.history_routes import router as history_router
 from app.routes import admin_routes
 from app.routes import topic_performance_routes
 from app.routes.profile_routes import router as profile_router
+from app.routes.profile_upload import router as profile_upload_router
 from fastapi.staticfiles import StaticFiles
 
 
@@ -42,6 +43,7 @@ def root():
 
 app.include_router(login_router)
 app.include_router(profile_router)
+app.include_router(profile_upload_router)
 app.include_router(quiz_router)
 app.include_router(evaluation_router)
 app.include_router(recommend_router)
